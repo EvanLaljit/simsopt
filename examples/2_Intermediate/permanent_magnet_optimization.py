@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 r"""
-In this example we solve a FOCUS like Stage II coil optimisation problem: the
-goal is to find coils that generate a specific target normal field on a given
-surface.  In this particular case we consider a vacuum field, so the target is
-just zero.
+In this example we optimize the permanent magnets from a 
+pre-computed permanent magnet grid, plasma surface, and BiotSavart
+field. 
 
-The target equilibrium is the QA configuration of arXiv:2108.03711.
+Several pre-set permanent magnet grids are available for the
+LandremanPaul QA and QH plasma surfaces, the MUSE surface, 
+and the NCSX C09R00 half-Tesla surface.
 """
 
 import os
+import sys
 import pickle
 from matplotlib import pyplot as plt
 from pathlib import Path
-from mpi4py import MPI
 import numpy as np
 from simsopt.geo.surfacerzfourier import SurfaceRZFourier
 from simsopt.objectives.utilities import QuadraticPenalty
@@ -23,8 +24,76 @@ from simsopt.util.permanent_magnet_optimizer import PermanentMagnetOptimizer
 from simsopt._core.optimizable import Optimizable
 import time
 
-final_run = True
+t_start = time.time()
+# Determine which plasma equilibrium is being used
+print("Usage requires a configuration flag chosen from: qa(_nonplanar), qh(_nonplanar), muse, ncsx, and a flag specifying high or low resolution")
+if len(sys.argv) < 4:
+    print(
+        "Error! You must specify at least 3 arguments: "
+        "the configuration flag, resolution flag, final run flag "
+        "(whether to run time-intensive processes like QFMs, Poincare "
+        "plots, VMEC, etc.), and (optionally) the L0 and L2 regularizer"
+        " strengths."
+    )
+    exit(1)
+config_flag = str(sys.argv[1])
+if config_flag not in ['qa', 'qa_nonplanar', 'qh', 'qh_nonplanar', 'muse', 'ncsx']:
+    print(
+        "Error! The configuration flag must specify one of "
+        "the pre-set plasma equilibria: qa, qa_nonplanar, "
+        "qh, qh_nonplanar, muse, or ncsx. "
+    )
+    exit(1)
+res_flag = str(sys.argv[2])
+if res_flag not in ['low', 'high']:
+    print(
+        "Error! The resolution flag must specify one of "
+        "low or high."
+    )
+    exit(1)
+final_run = (str(sys.argv[3]) == 'True')
+print('Config flag = ', config_flag, ', Resolution flag = ', res_flag, ', Final run =', final_run)
+if len(sys.argv) >= 5:
+    reg_l0 = float(sys.argv[4])
+    if not np.isclose(reg_l0, 0.0):
+        nu = 1
+    else:
+        nu = 1e100
+else:
+    reg_l0 = 0.0  # default is no L0 norm
+    nu = 1e100
+if len(sys.argv) >= 6:
+    reg_l2 = float(sys.argv[5])
+else:
+    reg_l2 = 1e-8
+
+# Pre-set parameters for each configuration
+FOCUS = False
+cylindrical_flag = True
+if res_flag == 'high':
+    nphi = 32
+    ntheta = 32
+else:
+    nphi = 8
+    ntheta = 8
+if config_flag == 'muse':
+    dr = 0.01
+    coff = 0.04
+    poff = 0.05
+    FOCUS = True
+    input_name = config_flag 
+elif 'qa' in config_flag or 'qh' in config_flag:
+    dr = 0.02
+    coff = 0.05
+    poff = 0.1
+    input_name = 'LandremanPaul2021_' + config_flag[:2].upper()
+elif config_flag == 'ncsx':
+    dr = 0.02
+    coff = 0.02
+    poff = 0.1
+
 if final_run:
+    from mpi4py import MPI
     from simsopt.field.tracing import SurfaceClassifier, \
         particles_to_vtk, compute_fieldlines, LevelsetStoppingCriterion, plot_poincare_data, \
         IterationStoppingCriterion
@@ -36,42 +105,43 @@ if final_run:
     comm = MPI.COMM_WORLD
     # Number of iterations to perform:
     ci = "CI" in os.environ and os.environ['CI'].lower() in ['1', 'true']
-    ci = True
     nfieldlines = 40 if ci else 40
     tmax_fl = 30000 if ci else 50000
     degree = 2 if ci else 4
+else:
+    comm = None
 
 t1 = time.time()
-class_filename = "PM_optimizer_muse"
-reg_l2 = 1e-8  # 1e-7
-reg_l0 = 0.0
-nu = 1e100
-nphi = 16
-ntheta = 8
-dr = 0.01 
-coff = 0.01 
-poff = 0.05 
-IN_DIR = "muse_nphi{0:d}_ntheta{1:d}_dr{2:.2e}_coff{3:.2e}_poff{4:.2e}/".format(nphi, ntheta, dr, coff, poff)
-pm_opt = pickle.load(open(IN_DIR + class_filename + ".pickle", "rb", -1))
+class_filename = "PM_optimizer_" + config_flag
+
+# Don't save in home directory on NERSC -- save on SCRATCH
+scratch_path = '/global/cscratch1/sd/akaptano/'
+
+IN_DIR = scratch_path + config_flag + "_nphi{0:d}_ntheta{1:d}_dr{2:.2e}_coff{3:.2e}_poff{4:.2e}/".format(nphi, ntheta, dr, coff, poff)
+pickle_name = IN_DIR + class_filename + ".pickle"
+pm_opt = pickle.load(open(pickle_name, "rb", -1))
 
 # Check that you loaded the correct file with the same parameters
-assert dr == pm_opt.dr
-assert nphi == pm_opt.nphi
-assert ntheta == pm_opt.ntheta
-assert coff == pm_opt.coil_offset
-assert poff == pm_opt.plasma_offset
+assert (dr == pm_opt.dr)
+assert (nphi == pm_opt.nphi)
+assert (ntheta == pm_opt.ntheta)
+assert (coff == pm_opt.coil_offset)
+assert (poff == pm_opt.plasma_offset)
 
-OUT_DIR = IN_DIR + "output_muse_nphi{0:d}_ntheta{1:d}_dr{2:.2e}_coff{3:.2e}_poff{4:.2e}_regl2{5:.2e}_regl0{6:.2e}_nu{7:.2e}/".format(nphi, ntheta, dr, coff, poff, reg_l2, reg_l0, nu)
+OUT_DIR = IN_DIR + "output_regl2{5:.2e}_regl0{6:.2e}_nu{7:.2e}/".format(nphi, ntheta, dr, coff, poff, reg_l2, reg_l0, nu)
 os.makedirs(OUT_DIR, exist_ok=True)
 t2 = time.time()
 print('Loading pickle file and other initialization took ', t2 - t1, ' s')
 
 t1 = time.time()
 TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolve()
-filename = TEST_DIR / 'input.MUSE'
-s = SurfaceRZFourier.from_focus(filename, range="half period", nphi=nphi, ntheta=ntheta)
+surface_filename = TEST_DIR / ('input.' + input_name)
+if config_flag == 'muse':
+    s = SurfaceRZFourier.from_focus(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+else:
+    s = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
 t2 = time.time()
-print("Done loading in MUSE plasma boundary surface, t = ", t2 - t1)
+print("Done loading in plasma boundary surface, t = ", t2 - t1)
 bs = Optimizable.from_file(IN_DIR + 'BiotSavart.json')
 bs.set_points(s.gamma().reshape((-1, 3)))
 
@@ -80,10 +150,12 @@ pm_opt.plasma_boundary = s
 
 print('Done initializing the permanent magnet object')
 t1 = time.time()
-max_iter_MwPGP = 1000
+max_iter_MwPGP = 500
+max_iter_RS = 20
+epsilon = 1e-2
 MwPGP_history, RS_history, m_history, dipoles = pm_opt._optimize(
-    max_iter_MwPGP=max_iter_MwPGP, epsilon=1e-3, 
-    reg_l2=reg_l2, reg_l0=reg_l0, nu=nu, max_iter_RS=20
+    max_iter_MwPGP=max_iter_MwPGP, epsilon=epsilon,
+    reg_l2=reg_l2, reg_l0=reg_l0, nu=nu, max_iter_RS=max_iter_RS
 )
 t2 = time.time()
 print('Done optimizing the permanent magnet object')
@@ -98,7 +170,7 @@ print('sum(|m_i|)', np.sum(np.sqrt(np.sum(dipoles ** 2, axis=-1))))
 t1 = time.time()
 b_dipole = DipoleField(pm_opt)
 b_dipole.set_points(s.gamma().reshape((-1, 3)))
-b_dipole._toVTK(OUT_DIR + "Dipole_Fields_muse")
+b_dipole._toVTK(OUT_DIR + "Dipole_Fields")
 pm_opt._plot_final_dipoles()
 
 t2 = time.time()
@@ -122,18 +194,12 @@ print('Dipole field setup done')
 
 make_plots = True 
 if make_plots:
-    # Make plot of ATA element values
-    #plt.figure()
-    #plt.hist(np.ravel(np.abs(pm_opt.ATA)), bins=np.logspace(-20, -2, 100), log=True)
-    #plt.xscale('log')
-    #plt.grid(True)
-    #plt.savefig(OUT_DIR + 'histogram_ATA_values_muse.png')
 
     # Make plot of the relax-and-split convergence
     plt.figure()
     plt.semilogy(MwPGP_history)
     plt.grid(True)
-    plt.savefig(OUT_DIR + 'objective_history_muse.png')
+    plt.savefig(OUT_DIR + 'objective_history.png')
 
     # make histogram of the dipoles, normalized by their maximum values
     plt.figure()
@@ -141,12 +207,15 @@ if make_plots:
     plt.grid(True)
     plt.xlabel('Normalized magnitudes')
     plt.ylabel('Number of dipoles')
-    plt.savefig(OUT_DIR + 'm_histogram_muse.png')
+    plt.savefig(OUT_DIR + 'm_histogram.png')
     print('Done optimizing the permanent magnets')
 t2 = time.time()
 print("Done printing and plotting, ", t2 - t1, " s")
 
-s = SurfaceRZFourier.from_focus(filename, range="full torus", nphi=nphi, ntheta=ntheta)
+if config_flag == 'muse':
+    s = SurfaceRZFourier.from_focus(surface_filename, range="full torus", nphi=nphi, ntheta=ntheta)
+else:
+    s = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", nphi=nphi, ntheta=ntheta)
 
 # Makes a Vmec file for the MUSE boundary -- only needed to do it once
 #filename = '../../tests/test_files/input.LandremanPaul2021_QA'  # _lowres
@@ -167,8 +236,8 @@ def trace_fieldlines(bfield, label):
     # print(fieldlines_phi_hits, np.shape(fieldlines_phi_hits))
     print(f"Time for fieldline tracing={t2-t1:.3f}s. Num steps={sum([len(l) for l in fieldlines_tys])//nfieldlines}", flush=True)
     if comm is None or comm.rank == 0:
-        # particles_to_vtk(fieldlines_tys, OUT_DIR + f'fieldlines_{label}_muse')
-        plot_poincare_data(fieldlines_phi_hits, phis, OUT_DIR + f'poincare_fieldline_{label}_muse.png', dpi=150)
+        # particles_to_vtk(fieldlines_tys, OUT_DIR + f'fieldlines_{label}')
+        plot_poincare_data(fieldlines_phi_hits, phis, OUT_DIR + f'poincare_fieldline_{label}.png', dpi=150)
 
 
 def make_qfm(s, Bfield, Bfield_tf):
@@ -271,17 +340,21 @@ if comm is None or comm.rank == 0:
     ntheta = ntheta
     quadpoints_phi = np.linspace(0, 1, nphi, endpoint=True)
     quadpoints_theta = np.linspace(0, 1, ntheta, endpoint=True)
-    s = SurfaceRZFourier.from_focus(filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
+
+    if config_flag == 'muse':
+        s = SurfaceRZFourier.from_focus(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
+    else:
+        s = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
 
     bs.set_points(s.gamma().reshape((-1, 3)))
     b_dipole.set_points(s.gamma().reshape((-1, 3)))
     # For plotting Bn on the full torus surface at the end with just the dipole fields
     pointData = {"B_N": np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)[:, :, None]}
-    s.to_vtk(OUT_DIR + "biot_savart_opt_muse", extra_data=pointData)
+    s.to_vtk(OUT_DIR + "biot_savart_opt", extra_data=pointData)
     pointData = {"B_N": np.sum(b_dipole.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)[:, :, None]}
-    s.to_vtk(OUT_DIR + "only_pms_opt_muse", extra_data=pointData)
+    s.to_vtk(OUT_DIR + "only_pms_opt", extra_data=pointData)
     pointData = {"B_N": np.sum((bs.B() + b_dipole.B()).reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)[:, :, None]}
-    s.to_vtk(OUT_DIR + "pms_opt_muse", extra_data=pointData)
+    s.to_vtk(OUT_DIR + "pms_opt", extra_data=pointData)
     t2 = time.time()
     print('Done saving final vtk files, ', t2 - t1, " s")
     plt.show()
