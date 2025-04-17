@@ -22,6 +22,7 @@ The target equilibrium is the QA configuration of arXiv:2108.03711.
 """
 
 import os
+import time 
 from pathlib import Path
 import numpy as np
 from scipy.optimize import minimize
@@ -32,6 +33,8 @@ from simsopt.geo import (SurfaceRZFourier, curves_to_vtk, create_equally_spaced_
 from simsopt.objectives import Weight, SquaredFlux, QuadraticPenalty
 from simsopt.util import in_github_actions
 
+
+start_time = time.time()
 # Number of unique coil shapes, i.e. the number of coils per half field period:
 # (Since the configuration has nfp = 2, multiply by 4 to get the total number of coils.)
 ncoils = 4
@@ -43,7 +46,7 @@ R0 = 1.0
 R1 = 0.5
 
 # Number of Fourier modes describing each Cartesian component of each coil:
-order = 5
+order = 10
 
 # Weight on the curve lengths in the objective function. We use the `Weight`
 # class here to later easily adjust the scalar value and rerun the optimization
@@ -59,31 +62,31 @@ CS_THRESHOLD = 0.3
 CS_WEIGHT = 10
 
 # Threshold and weight for the curvature penalty in the objective function:
-CURVATURE_THRESHOLD = 5.
-CURVATURE_WEIGHT = 1e-6
+CURVATURE_THRESHOLD = 50.  #original 5. and 1e-6
+CURVATURE_WEIGHT = 1e-8
 
 # Threshold and weight for the mean squared curvature penalty in the objective function:
-MSC_THRESHOLD = 5
-MSC_WEIGHT = 1e-6
+MSC_THRESHOLD = 5 #original 5 and 1e-6
+MSC_WEIGHT = 0
 
 # Number of iterations to perform:
-MAXITER = 50 if in_github_actions else 400
+MAXITER = 50 if in_github_actions else 5000
 
 # File for the desired boundary magnetic surface:
 TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolve()
 filename = TEST_DIR / 'input.LandremanPaul2021_QA'
 
 # Directory for output
-OUT_DIR = "./output/"
-os.makedirs(OUT_DIR, exist_ok=True)
+OUT_DIR = Path("output_stage_two_optimization")
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 #######################################################
 # End of input parameters.
 #######################################################
 
 # Initialize the boundary magnetic surface:
-nphi = 32
-ntheta = 32
+nphi = 64
+ntheta = 64
 s = SurfaceRZFourier.from_vmec_input(filename, range="half period", nphi=nphi, ntheta=ntheta)
 
 # Create the initial coils:
@@ -99,9 +102,9 @@ bs = BiotSavart(coils)
 bs.set_points(s.gamma().reshape((-1, 3)))
 
 curves = [c.curve for c in coils]
-curves_to_vtk(curves, OUT_DIR + "curves_init")
+curves_to_vtk(curves, OUT_DIR / "curves_init")
 pointData = {"B_N": np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)[:, :, None]}
-s.to_vtk(OUT_DIR + "surf_init", extra_data=pointData)
+s.to_vtk(OUT_DIR / "surf_init", extra_data=pointData)
 
 # Define the individual terms objective function:
 Jf = SquaredFlux(s, bs)
@@ -166,9 +169,9 @@ print("""
 ################################################################################
 """)
 res = minimize(fun, dofs, jac=True, method='L-BFGS-B', options={'maxiter': MAXITER, 'maxcor': 300}, tol=1e-15)
-curves_to_vtk(curves, OUT_DIR + "curves_opt_short")
+curves_to_vtk(curves, OUT_DIR / "curves_opt_short")
 pointData = {"B_N": np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)[:, :, None]}
-s.to_vtk(OUT_DIR + "surf_opt_short", extra_data=pointData)
+s.to_vtk(OUT_DIR / "surf_opt_short", extra_data=pointData)
 
 
 # We now use the result from the optimization as the initial guess for a
@@ -177,9 +180,11 @@ s.to_vtk(OUT_DIR + "surf_opt_short", extra_data=pointData)
 dofs = res.x
 LENGTH_WEIGHT *= 0.1
 res = minimize(fun, dofs, jac=True, method='L-BFGS-B', options={'maxiter': MAXITER, 'maxcor': 300}, tol=1e-15)
-curves_to_vtk(curves, OUT_DIR + "curves_opt_long")
+curves_to_vtk(curves, OUT_DIR / "curves_opt_long")
 pointData = {"B_N": np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)[:, :, None]}
-s.to_vtk(OUT_DIR + "surf_opt_long", extra_data=pointData)
+s.to_vtk(OUT_DIR / "surf_opt_long", extra_data=pointData)
 
 # Save the optimized coil shapes and currents so they can be loaded into other scripts for analysis:
-bs.save(OUT_DIR + "biot_savart_opt.json")
+bs.save(OUT_DIR / "biot_savart_opt.json")
+end_time = time.time()
+print(f"Took {end_time-start_time}s")

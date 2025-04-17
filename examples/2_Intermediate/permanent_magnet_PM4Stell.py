@@ -29,19 +29,19 @@ from simsopt.util.permanent_magnet_helper_functions \
 from simsopt.util import FocusPlasmaBnormal, FocusData, read_focus_coils, in_github_actions
 from simsopt.util.polarization_project import (polarization_axes, orientation_phi,
                                                discretize_polarizations)
-
+from simsopt.objectives import SquaredFlux
 t_start = time.time()
 
 # Set some parameters -- warning this is super low resolution!
 if in_github_actions:
-    N = 2  # >= 64 for high-resolution runs
+    N = 64  # >= 64 for high-resolution runs
     nIter_max = 100
     max_nMagnets = 20
     downsample = 100  # drastically downsample the grid if running CI
 else:
-    N = 16  # >= 64 for high-resolution runs
-    nIter_max = 10000
-    max_nMagnets = 1000
+    N = 64  # >= 64 for high-resolution runs
+    nIter_max = 40000
+    max_nMagnets = nIter_max
     downsample = 1
 
 nphi = N
@@ -50,9 +50,9 @@ algorithm = 'ArbVec_backtracking'
 nBacktracking = 200 
 nAdjacent = 10
 thresh_angle = np.pi  # / np.sqrt(2)
-nHistory = 10
+nHistory = 1
 angle = int(thresh_angle * 180 / np.pi)
-out_dir = Path("PM4Stell_angle{angle}_nb{nBacktracking)_na{nAdjacent}") 
+out_dir = Path(f"PM4Stell_angle{angle}_nb{nBacktracking}_na{nAdjacent}") 
 out_dir.mkdir(parents=True, exist_ok=True)
 print('out directory = ', out_dir)
 
@@ -98,8 +98,20 @@ for i in range(ncoils):
 # Obtain Bnormal from the plasma and the coils
 ncsx_tfcoils = coils
 bs_tfcoils = BiotSavart(ncsx_tfcoils)
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
 bs_tfcoils.set_points(lcfs_ncsx.gamma().reshape((-1, 3)))
 bn_tfcoils = np.sum(
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
     bs_tfcoils.B().reshape((nphi, ntheta, 3)) * lcfs_ncsx.unitnormal(), 
     axis=2
 )
@@ -119,6 +131,12 @@ pol_axes_f, pol_type_f = polarization_axes(['face'])
 ntype_f = int(len(pol_type_f)/2)
 pol_axes_f = pol_axes_f[:ntype_f, :]
 pol_type_f = pol_type_f[:ntype_f]
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
 pol_axes = np.concatenate((pol_axes, pol_axes_f), axis=0)
 pol_type = np.concatenate((pol_type, pol_type_f))
 pol_axes_fe_ftri, pol_type_fe_ftri = polarization_axes(['fe_ftri'])
@@ -131,8 +149,20 @@ pol_axes_fc_ftri, pol_type_fc_ftri = polarization_axes(['fc_ftri'])
 ntype_fc_ftri = int(len(pol_type_fc_ftri)/2)
 pol_axes_fc_ftri = pol_axes_fc_ftri[:ntype_fc_ftri, :]
 pol_type_fc_ftri = pol_type_fc_ftri[:ntype_fc_ftri] + 2
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
 pol_axes = np.concatenate((pol_axes, pol_axes_fc_ftri), axis=0)
 pol_type = np.concatenate((pol_type, pol_type_fc_ftri))
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
 
 # Read in the phi coordinates and set the pol_vectors
 ophi = orientation_phi(fname_corn)[:nMagnets_tot]
@@ -143,7 +173,13 @@ pol_vectors[:, :, 1] = mag_data.pol_y
 pol_vectors[:, :, 2] = mag_data.pol_z
 
 # Using m_maxima functionality to try out unrealistically strong magnets
-B_max = 5  # 5 Tesla!!!!
+B_max = 5  # 5 Tes
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")la!!!!
 mu0 = 4 * np.pi * 1e-7
 m_maxima = B_max / mu0
 kwargs_geo = {"pol_vectors": pol_vectors, "m_maxima": m_maxima, "downsample": downsample}
@@ -156,6 +192,12 @@ pm_ncsx = PermanentMagnetGrid.geo_setup_from_famus(
 # Optimize with the GPMO algorithm
 kwargs = initialize_default_kwargs('GPMO')
 kwargs['K'] = nIter_max
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
 kwargs['nhistory'] = nHistory
 if algorithm == 'backtracking' or algorithm == 'ArbVec_backtracking':
     kwargs['backtracking'] = nBacktracking
@@ -166,22 +208,64 @@ if algorithm == 'backtracking' or algorithm == 'ArbVec_backtracking':
         kwargs['max_nMagnets'] = max_nMagnets
 t1 = time.time()
 R2_history, Bn_history, m_history = GPMO(pm_ncsx, algorithm, **kwargs)
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
 dt = time.time() - t1
 print('GPMO took t = ', dt, ' s')
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
 
 # Save files
-if False:
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
+if True:
     # Make BiotSavart object from the dipoles and plot solution 
     b_dipole = DipoleField(
         pm_ncsx.dipole_grid_xyz,
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
         pm_ncsx.m,
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
         nfp=s_plot.nfp,
         coordinate_flag=pm_ncsx.coordinate_flag,
         m_maxima=pm_ncsx.m_maxima,
     )
     b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
     b_dipole._toVTK(out_dir / "Dipole_Fields")
-    make_Bnormal_plots(bs_tfcoils + b_dipole, s_plot, out_dir, "biot_savart_optimized")
+
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")    make_Bnormal_plots(bs_tfcoils + b_dipole, s_plot, out_dir, "biot_savart_optimized")
     Bnormal_coils = np.sum(bs_tfcoils.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=-1)
     Bnormal_dipoles = np.sum(b_dipole.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=-1)
     Bnormal_plasma = bnormal_obj_ncsx.bnormal_grid(qphi, ntheta, 'full torus')
@@ -200,8 +284,32 @@ if False:
     nmags = m_history.shape[0]
     nhist = m_history.shape[2]
     m_history_2d = m_history.reshape((nmags*m_history.shape[1], nhist))
-    np.savetxt(out_dir / 'm_history_nmags=%d_nhist=%d.txt' % (nmags, nhist), m_history_2d)
-t_end = time.time()  
+    np.savetxt(out_dir / ('m_history_nmags=%d_nhist=%d.txt' % (nmags, nhist)), m_history_2d)
+
+# Print optimized f_B and other metrics
+### Note this will only agree with the optimization in the high-resolution
+### limit where nphi ~ ntheta >= 64!
+b_dipole = DipoleField(
+    pm_ncsx.dipole_grid_xyz,
+    pm_ncsx.m,
+    nfp=s1.nfp,
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
+    coordinate_flag=pm_ncsx.coordinate_flag,
+    m_maxima=pm_ncsx.m_maxima,
+)
+b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
+bs_tfcoils.set_points(s_plot.gamma().reshape((-1, 3)))
+Bnormal = np.sum(bs_tfcoils.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)
+f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
+print('f_B = ', f_B_sf) 
+
+t_end = time.time()
+print(f"Number of possible dipoles {pm_ncsx.ndipoles}")
 print('Script took in total t = ', t_end - t_start, ' s')
 
 # Plot optimization results as function of iterations
@@ -213,3 +321,9 @@ plt.xlabel('K')
 plt.ylabel('Metric values')
 plt.legend()
 # plt.show()
+for i in range(len(N_err)):
+    px.line(x=t,y=signal_1(t,N_err[i]),
+            title=f"Output Signal for First {harmonic[i]} Nonzero Term(s) with N={N_err[i]}",   
+            labels={'x':'Time (s)','y':'Output Signal (V)'}).show()
+    for j in range(len(t_err)):
+        print("N=",N_err[i],"t=",t_err[j],"signal_error = ", 100*(signal_1(t_err[j],N_err[i])-signal_err[j])/signal_err[j],"%")
