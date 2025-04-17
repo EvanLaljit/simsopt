@@ -47,12 +47,12 @@ t_start = time.time()
 
 # Set some parameters -- if doing CI, lower the resolution
 if in_github_actions:
-    nphi = 4  # nphi = ntheta >= 64 needed for accurate full-resolution runs
+    nphi = 64  # nphi = ntheta >= 64 needed for accurate full-resolution runs
     ntheta = nphi
     dr = 0.05  # cylindrical bricks with radial extent 5 cm
 else:
-    nphi = 16  # nphi = ntheta >= 64 needed for accurate full-resolution runs
-    ntheta = 16
+    nphi = 64  # nphi = ntheta >= 64 needed for accurate full-resolution runs
+    ntheta = 64
     dr = 0.02  # cylindrical bricks with radial extent 2 cm
 
 coff = 0.1  # PM grid starts offset ~ 10 cm from the plasma surface
@@ -71,7 +71,7 @@ s_inner.extend_via_projected_normal(poff)
 s_outer.extend_via_projected_normal(poff + coff)
 
 # Make the output directory
-out_dir = Path("permanent_magnet_QA_output")
+out_dir = Path("output_permanent_magnet_QA")
 out_dir.mkdir(parents=True, exist_ok=True)
 
 # initialize the coils
@@ -123,7 +123,7 @@ reg_l0, _, _, nu = pm_opt.rescale_for_opt(reg_l0, 0.0, 0.0, nu)
 # Set some hyperparameters for the optimization
 kwargs = initialize_default_kwargs()
 kwargs['nu'] = nu  # Strength of the "relaxation" part of relax-and-split
-kwargs['max_iter'] = 10  # Number of iterations to take in a convex step
+kwargs['max_iter'] = 100  # Number of iterations to take in a convex step
 kwargs['max_iter_RS'] = 10  # Number of total iterations of the relax-and-split algorithm
 kwargs['reg_l0'] = reg_l0
 

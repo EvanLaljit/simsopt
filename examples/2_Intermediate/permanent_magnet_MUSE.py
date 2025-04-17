@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env  “export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASKpython
 r"""
 This example script uses the GPMO
 greedy algorithm for solving permanent 
@@ -44,11 +44,19 @@ if in_github_actions:
     max_nMagnets = 20
     downsample = 100  # downsample the FAMUS grid of magnets by this factor
 else:
+<<<<<<< HEAD
     nphi = 32  # >= 64 for high-resolution runs
     nIter_max = 50000
     nBacktracking = 200
     max_nMagnets = 20000
     downsample = 2
+=======
+    nphi = 64  # >= 64 for high-resolution runs
+    nIter_max = 60000
+    nBacktracking = 200
+    max_nMagnets = nIter_max
+    downsample = 1
+>>>>>>> master
 
 ntheta = nphi  # same as above
 dr = 0.01  # Radial extent in meters of the cylindrical permanent magnet bricks
@@ -142,8 +150,8 @@ print('Number of available dipoles = ', pm_opt.ndipoles)
 
 # Set some hyperparameters for the optimization
 algorithm = 'ArbVec_backtracking'  # Algorithm to use
-nAdjacent = 1  # How many magnets to consider "adjacent" to one another
-nHistory = 20  # How often to save the algorithm progress
+nAdjacent = 10  # How many magnets to consider "adjacent" to one another
+nHistory = 1  # How often to save the algorithm progress
 thresh_angle = np.pi  # The angle between two "adjacent" dipoles such that they should be removed
 kwargs = initialize_default_kwargs('GPMO')
 kwargs['K'] = nIter_max  # Maximum number of GPMO iterations to run
@@ -163,7 +171,7 @@ t2 = time.time()
 print('GPMO took t = ', t2 - t1, ' s')
 
 # plot the MSE history
-iterations = np.linspace(0, kwargs['max_nMagnets'], len(R2_history), endpoint=False)
+iterations = np.linspace(0, max_nMagnets, len(R2_history), endpoint=False)
 plt.figure()
 plt.semilogy(iterations, R2_history, label=r'$f_B$')
 plt.semilogy(iterations, Bn_history, label=r'$<|Bn|>$')
@@ -185,12 +193,12 @@ dipoles = pm_opt.m.reshape(pm_opt.ndipoles, 3)
 print('Volume of permanent magnets is = ', np.sum(np.sqrt(np.sum(dipoles ** 2, axis=-1))) / M_max)
 print('sum(|m_i|)', np.sum(np.sqrt(np.sum(dipoles ** 2, axis=-1))))
 
-save_plots = False
+save_plots = True
 if save_plots:
     # Save the MSE history and history of the m vectors
     np.savetxt(
         out_dir / f"mhistory_K{kwargs['K']}_nphi{nphi}_ntheta{ntheta}.txt", 
-        m_history.reshape(pm_opt.ndipoles * 3, kwargs['nhistory'] + 1)
+        m_history.reshape(pm_opt.ndipoles * 3, -1)
     )
     np.savetxt(
         out_dir / f"R2history_K{kwargs['K']}_nphi{nphi}_ntheta{ntheta}.txt",
@@ -202,7 +210,7 @@ if save_plots:
     make_Bnormal_plots(bs, s_plot, out_dir, "biot_savart_optimized")
 
     # Look through the solutions as function of K and make plots
-    for k in range(0, kwargs["nhistory"] + 1, 50):
+    for k in range(0,m_history.reshape(pm_opt.ndipoles*3,-1).shape[-1]):
         mk = m_history[:, :, k].reshape(pm_opt.ndipoles * 3)
         b_dipole = DipoleField(
             pm_opt.dipole_grid_xyz,
@@ -219,9 +227,9 @@ if save_plots:
         Bnormal_total = Bnormal + Bnormal_dipoles
 
         # For plotting Bn on the full torus surface at the end with just the dipole fields
-        make_Bnormal_plots(b_dipole, s_plot, out_dir, "only_m_optimized_K{K_save}_nphi{nphi}_ntheta{ntheta}")
+        make_Bnormal_plots(b_dipole, s_plot, out_dir, f"only_m_optimized_K{K_save}_nphi{nphi}_ntheta{ntheta}")
         pointData = {"B_N": Bnormal_total[:, :, None]}
-        s_plot.to_vtk(out_dir / "m_optimized_K{K_save}_nphi{nphi}_ntheta{ntheta}", extra_data=pointData)
+        s_plot.to_vtk(out_dir / f"m_optimized_K{K_save}_nphi{nphi}_ntheta{ntheta}", extra_data=pointData)
 
     # write solution to FAMUS-type file
     pm_opt.write_to_famus(out_dir)
