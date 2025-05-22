@@ -55,7 +55,7 @@ else:
 nphi = N
 ntheta = N
 algorithm = 'ArbVec_backtracking'
-nBacktracking = 200 
+nBacktracking = 200
 nAdjacent = 10
 thresh_angle = np.pi  # / np.sqrt(2)
 nHistory = 1
@@ -81,7 +81,7 @@ quadpoints_phi = np.linspace(0, 1, qphi, endpoint=True)
 quadpoints_theta = np.linspace(0, 1, ntheta, endpoint=True)
 s_plot = SurfaceRZFourier.from_focus(
     fname_plasma,
-    quadpoints_phi=quadpoints_phi, 
+    quadpoints_phi=quadpoints_phi,
     quadpoints_theta=quadpoints_theta
 )
 
@@ -288,7 +288,7 @@ for i in range(len(N_err)):
     Bnormal_coils = np.sum(bs_tfcoils.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=-1)
     Bnormal_dipoles = np.sum(b_dipole.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=-1)
     Bnormal_plasma = bnormal_obj_ncsx.bnormal_grid(qphi, ntheta, 'full torus')
-    Bnormal_total = Bnormal_plasma + Bnormal_coils + Bnormal_dipoles 
+    Bnormal_total = Bnormal_plasma + Bnormal_coils + Bnormal_dipoles
     pointData = {"B_N": Bnormal_plasma[:, :, None]}
     s_plot.to_vtk(out_dir / "Bnormal_plasma", extra_data=pointData)
     pointData = {"B_N": Bnormal_dipoles[:, :, None]}
