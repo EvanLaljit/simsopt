@@ -311,8 +311,8 @@ def trace_fieldlines(bfield, label):
     t2 = time.time()
     proc0_print(f"Time for fieldline tracing = {t2-t1:.3f}s. Num steps={sum([len(l) for l in fieldlines_tys])//nfieldlines}", flush=True)
     if comm_world is None or comm_world.rank == 0:
-        particles_to_vtk(fieldlines_tys, str(out_dir / f'fieldlines_{label}'))
-        plot_poincare_data(fieldlines_phi_hits, phis, out_dir / f'poincare_fieldline_MUSE_{label}.png', dpi=150)
+        particles_to_vtk(fieldlines_tys, out_dir / f'fieldlines_{label}')
+        plot_poincare_data(fieldlines_phi_hits, phis, out_dir / f'poincare_fieldline_{label}.png', dpi=150)
 
 
 # uncomment this to run tracing using the biot savart field (very slow!)
