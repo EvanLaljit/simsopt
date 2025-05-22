@@ -44,19 +44,19 @@ if in_github_actions:
     max_nMagnets = 20
     downsample = 100  # downsample the FAMUS grid of magnets by this factor
 else:
-<<<<<<< HEAD
-    nphi = 32  # >= 64 for high-resolution runs
+    nphi = 64  # >= 64 for high-resolution runs
     nIter_max = 50000
     nBacktracking = 200
-    max_nMagnets = 20000
-    downsample = 2
-=======
-    nphi = 64  # >= 64 for high-resolution runs
-    nIter_max = 60000
-    nBacktracking = 200
-    max_nMagnets = nIter_max
-    downsample = 1
->>>>>>> master
+    max_nMagnets = 30000
+    downsample = 5
+    
+tol = 1e-10
+nfieldlines = 30 #30
+tmax_fl = 20000 #10k
+degree = 4
+n = 40 #20
+
+algorithm = 'baseline'  # Algorithm to use
 
 ntheta = nphi  # same as above
 dr = 0.01  # Radial extent in meters of the cylindrical permanent magnet bricks
@@ -149,7 +149,7 @@ pm_opt = PermanentMagnetGrid.geo_setup_from_famus(s, Bnormal, famus_filename, **
 print('Number of available dipoles = ', pm_opt.ndipoles)
 
 # Set some hyperparameters for the optimization
-algorithm = 'ArbVec_backtracking'  # Algorithm to use
+algorithm = algorithm  # Algorithm to use
 nAdjacent = 10  # How many magnets to consider "adjacent" to one another
 nHistory = 1  # How often to save the algorithm progress
 thresh_angle = np.pi  # The angle between two "adjacent" dipoles such that they should be removed
@@ -285,11 +285,15 @@ if vmec_flag:
     equil.boundary = qfm_surf
     equil.run()
 
+
+#------------------------------------------------
+#Poincare Plot
+
 from simsopt.util import in_github_actions, proc0_print, comm_world
 from simsopt.field import (InterpolatedField, SurfaceClassifier, particles_to_vtk,
                            compute_fieldlines, LevelsetStoppingCriterion, plot_poincare_data)
 sc_fieldline = SurfaceClassifier(s, h=0.03, p=2)
-sc_fieldline.to_vtk(out_dir + 'levelset', h=0.02)
+sc_fieldline.to_vtk(str(out_dir / f'levelset'), h=0.02)
 
 def trace_fieldlines(bfield, label):
     t1 = time.time()
@@ -298,17 +302,17 @@ def trace_fieldlines(bfield, label):
     # at R=1.300425, but the outermost initial point is a bit inward
     # from that, R = 1.295, so the SurfaceClassifier does not think we
     # have exited the surface
-    R0 = np.linspace(0.32, 0.36, nfieldlines)
-    Z0 = np.zeros(nfieldlines)
+    R0 = np.linspace(0.26, 0.36, nfieldlines)
+    Z0 = np.linspace(-0.03,0.03,nfieldlines)
     phis = [(i/4)*(2*np.pi/s.nfp) for i in range(4)]
     fieldlines_tys, fieldlines_phi_hits = compute_fieldlines(
-        bfield, R0, Z0, tmax=tmax_fl, tol=1e-16, comm=comm_world,
+        bfield, R0, Z0, tmax=tmax_fl, tol=tol, comm=comm_world, #tol = 1e-16
         phis=phis, stopping_criteria=[LevelsetStoppingCriterion(sc_fieldline.dist)])
     t2 = time.time()
-    proc0_print(f"Time for fieldline tracing={t2-t1:.3f}s. Num steps={sum([len(l) for l in fieldlines_tys])//nfieldlines}", flush=True)
+    proc0_print(f"Time for fieldline tracing = {t2-t1:.3f}s. Num steps={sum([len(l) for l in fieldlines_tys])//nfieldlines}", flush=True)
     if comm_world is None or comm_world.rank == 0:
-        particles_to_vtk(fieldlines_tys, out_dir + f'fieldlines_{label}')
-        plot_poincare_data(fieldlines_phi_hits, phis, out_dir + f'poincare_fieldline_{label}.png', dpi=150)
+        particles_to_vtk(fieldlines_tys, str(out_dir / f'fieldlines_{label}'))
+        plot_poincare_data(fieldlines_phi_hits, phis, out_dir / f'poincare_fieldline_MUSE_{label}.png', dpi=150)
 
 
 # uncomment this to run tracing using the biot savart field (very slow!)
@@ -317,16 +321,18 @@ def trace_fieldlines(bfield, label):
 
 # Bounds for the interpolated magnetic field chosen so that the surface is
 # entirely contained in it
-nfieldlines = 30
-tmax_fl = 20000 
-degree = 2 
-n = 20
+
+
 rs = np.linalg.norm(s.gamma()[:, :, 0:2], axis=2)
 zs = s.gamma()[:, :, 2]
+
+print("rs range:", np.min(rs), "to", np.max(rs))
+print("zs range:", np.min(zs), "to", np.max(zs))
+
 rrange = (np.min(rs), np.max(rs), n)
 phirange = (0, 2*np.pi/s.nfp, n*2)
 # exploit stellarator symmetry and only consider positive z values:
-zrange = (0, np.max(zs), n//2)
+zrange = (0, np.max(np.abs(zs)), n//2)
 
 
 def skip(rs, phis, zs):
@@ -345,15 +351,25 @@ def skip(rs, phis, zs):
     proc0_print("Skip", sum(skip), "cells out of", len(skip), flush=True)
     return skip
 
+bfield = bs + b_dipole
 
+# Now create the InterpolatedField
+proc0_print('Initializing InterpolatedField')
 bsh = InterpolatedField(
-    bs, degree, rrange, phirange, zrange, True, nfp=s.nfp, stellsym=True, skip=skip
+    bfield, degree, rrange, phirange, zrange, True, nfp=s.nfp, stellsym=True, skip=skip
 )
+proc0_print('Done initializing InterpolatedField.')
+# Set points
 
-bsh.set_points(s.gamma().reshape((-1, 3)))
+bsh.set_points(s_plot.gamma().reshape((-1, 3)))
 Bh = bsh.B()
+
+print("Starting Field Tracing")
 trace_fieldlines(bsh, 'bsh')
+
+
+
 
 t_end = time.time()
 print('Total time = ', t_end - t_start)
-plt.show()
+#plt.show()

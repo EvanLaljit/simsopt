@@ -48,7 +48,6 @@ filename = TEST_DIR / 'input.LandremanPaul2021_QA'
 # Note that the range must be "full torus"!
 surf = SurfaceRZFourier.from_vmec_input(filename, nphi=200, ntheta=30, range="full torus")
 nfp = surf.nfp
-
 # Load in the optimized coils from stage_two_optimization.py:
 coils_filename = Path(__file__).parent / "inputs" / "biot_savart_opt.json"
 bs = simsopt.load(coils_filename)
