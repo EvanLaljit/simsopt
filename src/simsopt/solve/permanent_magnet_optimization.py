@@ -7,7 +7,7 @@ import simsoptpp as sopp
 from .._core.types import RealArray
 
 
-__all__ = ['relax_and_split', 'GPMO']
+__all__ = ['relax_and_split', 'GPMO','relax_and_split_stochastic',]
 
 
 def prox_l0(m: RealArray,
@@ -478,3 +478,170 @@ def GPMO(pm_opt, algorithm='baseline', **kwargs):
     pm_opt.m = np.ravel(m)
     pm_opt.m_proxy = pm_opt.m
     return errors, Bn_errors, m_history
+
+
+def relax_and_split_stochastic(pm_opt, b_vec, m0=None, **kwargs):
+    #optimizes for stochastic linear least squares problem,
+    #Expected_Value[(A@(m+e)-b)^2] ~ 1/S * sum (A@(m+e_s)-b)^2 
+    #which can be reduced to min m (A @ m + c/S)^2 where c = sum (A @ e - b)
+    #thus (-b) in the original problem --> +c/S;
+    #c is generated with random noise, which is made outside the function thus
+    #is passed as a parameter; this is to allow the function to be called numerous times 
+    #without changing the e_i's
+    """
+    Uses a relax-and-split algorithm for solving the permanent
+    magnet optimization problem, which solves a convex and nonconvex
+    part separately.
+
+    Defaults to the MwPGP convex step and no
+    nonconvex step.  If a nonconvexity is specified, the associated
+    prox function must be defined in this file.  Relax-and-split
+    allows for speedy algorithms for both steps and the imposition of
+    convex equality and inequality constraints (including the required
+    constraint on the strengths of the dipole moments).
+
+    Args:
+        pm_opt: The grid of permanent magnets to optimize.
+        m0: Initial guess for the permanent magnet dipole moments. Defaults
+            to a starting guess of all zeros. This vector must lie in the
+            hypersurface spanned by the L2 ball constraints. Note that if
+            algorithm is being used properly, the end result should be
+            independent of the choice of initial condition.
+        kwargs: Keyword arguments to pass to the algorithm. The following
+            arguments can be passed to the MwPGP algorithm:
+
+            epsilon:
+                Error tolerance for the convex part of the algorithm (MwPGP).
+            nu:
+                Hyperparameter used for the relax-and-split
+                least-squares. Set nu >> 1 to reduce the
+                importance of nonconvexity in the problem.
+            reg_l0:
+                Regularization value for the L0 nonconvex term in the
+                optimization. This value is automatically scaled based on
+                the max dipole moment values, so that reg_l0 = 1 corresponds
+                to reg_l0 = np.max(m_maxima). It follows that users should
+                choose reg_l0 in [0, 1].
+            reg_l1:
+                Regularization value for the L1 nonsmooth term in the
+                optimization,
+            reg_l2:
+                Regularization value for any convex regularizers in the
+                optimization problem, such as the often-used L2 norm.
+            max_iter_MwPGP:
+                Maximum iterations to perform during a run of the convex
+                part of the relax-and-split algorithm (MwPGP).
+            max_iter_RS:
+                Maximum iterations to perform of the overall relax-and-split
+                algorithm. Therefore, also the number of times that MwPGP is
+                called, and the number of times a prox is computed.
+            verbose:
+                Prints out all the loss term errors separately.
+
+    Returns:
+        A tuple of optimization loss, solution at each step, and sparse solution.
+
+        The tuple contains
+
+        errors:
+            Total optimization loss after each convex sub-problem is solved.
+        m_history:
+            Solution for the permanent magnets after each convex
+            sub-problem is solved.
+        m_proxy_history:
+            Sparse solution for the permanent magnets after each convex
+            sub-problem is solved.
+
+    """
+    # change to row-major order for the C++ code
+    # A_obj = np.ascontiguousarray(pm_opt.A_obj)
+    ATb=np.ascontiguousarray(np.reshape((pm_opt.A_obj).T @ b_vec, (pm_opt.ndipoles, 3)))
+    # print initial errors and values before optimization
+    pm_opt._print_initial_opt()
+
+    # Begin the various algorithms
+    errors = []
+    m_history = []
+    m_proxy_history = []
+
+    # get optimal alpha value for the MwPGP algorithm
+    alpha_max = 2.0 / pm_opt.ATA_scale
+    alpha_max = alpha_max * (1 - 1e-5)
+    convex_step = sopp.MwPGP_algorithm
+
+    # set the nonconvex step in the algorithm
+    reg_rs = 0.0
+    nu = kwargs.get("nu", 1e100)
+    reg_l0 = kwargs.get("reg_l0", 0.0)
+    reg_l1 = kwargs.get("reg_l1", 0.0)
+
+    max_iter_RS = kwargs.pop('max_iter_RS', 1)
+    epsilon_RS = kwargs.pop('epsilon_RS', 1e-3)
+
+    if (not np.isclose(reg_l0, 0.0, atol=1e-16)) and (not np.isclose(reg_l1, 0.0, atol=1e-16)):
+        raise ValueError(' L0 and L1 loss terms cannot be used concurrently.')
+    elif not np.isclose(reg_l0, 0.0, atol=1e-16):
+        prox = prox_l0
+        reg_rs = reg_l0
+    elif not np.isclose(reg_l1, 0.0, atol=1e-16):
+        prox = prox_l1
+        reg_rs = reg_l1
+
+    # Auxiliary variable in relax-and-split can be initialized
+    # to prox(m0), where m0 is the initial guess for m.
+    if m0 is not None:
+        setup_initial_condition(pm_opt, m0)
+    m0 = pm_opt.m0
+    m_proxy = pm_opt.m0
+    mmax = pm_opt.m_maxima
+    if reg_rs > 0.0:
+        m_proxy = prox(m_proxy, mmax, reg_rs, nu)
+    kwargs['alpha'] = alpha_max
+
+    # Begin optimization
+    if reg_rs > 0.0:
+        # Relax-and-split algorithm
+        m = pm_opt.m0
+        for i in range(max_iter_RS):
+            # update m with the CONVEX part of the algorithm
+            algorithm_history, _, _, m = convex_step(
+                A_obj=pm_opt.A_obj,
+                b_obj=pm_opt.b_obj,
+                ATb=ATb,
+                m_proxy=np.ascontiguousarray(m_proxy.reshape(pm_opt.ndipoles, 3)),
+                m0=np.ascontiguousarray(m.reshape(pm_opt.ndipoles, 3)),  # note updated m is new guess
+                m_maxima=mmax,
+                **kwargs
+            )
+            m_history.append(m)
+            m = np.ravel(m)
+            algorithm_history = algorithm_history[algorithm_history != 0]
+            errors.append(algorithm_history[-1])
+
+            # Solve the nonconvex optimization -- i.e. take a prox
+            m_proxy = prox(m, mmax, reg_rs, nu)
+            m_proxy_history.append(m_proxy)
+            if np.linalg.norm(m - m_proxy) < epsilon_RS:
+                print('Relax-and-split finished early, at iteration ', i)
+                break
+    else:
+
+        m0 = np.ascontiguousarray(m0.reshape(pm_opt.ndipoles, 3))
+        # no nonconvex terms being used, so just need one round of the
+        # convex algorithm called MwPGP
+        algorithm_history, _, m_history, m = convex_step(
+            A_obj=pm_opt.A_obj,
+            b_obj=b_vec,
+            ATb=ATb,
+            m_proxy=m0,
+            m0=m0,
+            m_maxima=mmax,
+            **kwargs
+        )
+        m = np.ravel(m)
+        m_proxy = m
+        
+# note m = m_proxy if not using relax-and-split (i.e. problem is convex)
+    pm_opt.m = m
+    pm_opt.m_proxy = m_proxy
+    return errors, m_history, m_proxy_history

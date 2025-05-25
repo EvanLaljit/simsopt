@@ -43,6 +43,40 @@ from simsopt.solve import relax_and_split
 from simsopt.util import in_github_actions
 from simsopt.util.permanent_magnet_helper_functions import *
 
+def calculate_modB_on_major_radius(bs, s):
+    """
+    Check the average magnetic field strength along the major radius
+    (m=n=0 mode of a SurfaceRZFourier object)
+    to make sure the configuration is scaled correctly. For highly shaped
+    stellarators, this can deviate a bit from the on-axis B field strength.
+
+    Args:
+        bs (BiotSavart): MagneticField or BiotSavart class object.
+        s (SurfaceRZFourier): plasma boundary surface.
+
+    Returns:
+        B0avg (float): Average magnetic field strength along 
+          the major radius (m=n=0 mode of a SurfaceRZFourier object) of the device.
+    """
+    nphi = len(s.quadpoints_phi)
+    bspoints = np.zeros((nphi, 3))
+
+    # rescale phi from [0, 1) to [0, 2 * pi)
+    phi = s.quadpoints_phi * 2 * np.pi
+
+    R0 = s.get_rc(0, 0)
+    for i in range(nphi):
+        bspoints[i] = np.array([R0 * np.cos(phi[i]),
+                                R0 * np.sin(phi[i]),
+                                0.0]
+                               )
+    bs.set_points(bspoints)
+    B0 = np.linalg.norm(bs.B(), axis=-1)
+    B0avg = np.mean(np.linalg.norm(bs.B(), axis=-1))
+    print("Bmag at R = ", R0, ", Z = 0: ", B0)
+    print("toroidally averaged Bmag at R = ", R0, ", Z = 0: ", B0avg)
+    return B0avg
+
 t_start = time.time()
 
 # Set some parameters -- if doing CI, lower the resolution
@@ -279,77 +313,6 @@ if vmec_flag:
 
 
 #-------------------------------------
-#Poincare Plot
-
-from simsopt.util import in_github_actions, proc0_print, comm_world
-from simsopt.field import (InterpolatedField, SurfaceClassifier, particles_to_vtk,
-                           compute_fieldlines, LevelsetStoppingCriterion, plot_poincare_data)
-sc_fieldline = SurfaceClassifier(s, h=0.03, p=2)
-sc_fieldline.to_vtk(str(out_dir / f'levelset'), h=0.02)
-
-def trace_fieldlines(bfield, label):
-    t1 = time.time()
-    # Set initial grid of points for field line tracing, going from
-    # the magnetic axis to the surface. The actual plasma boundary is
-    # at R=1.300425, but the outermost initial point is a bit inward
-    # from that, R = 1.295, so the SurfaceClassifier does not think we
-    # have exited the surface
-    R0 = np.linspace(1.2125346, 1.295, nfieldlines)
-    Z0 = np.zeros(nfieldlines)
-    phis = [(i/4)*(2*np.pi/s.nfp) for i in range(4)]
-    fieldlines_tys, fieldlines_phi_hits = compute_fieldlines(
-        bfield, R0, Z0, tmax=tmax_fl, tol=1e-16, comm=comm_world,
-        phis=phis, stopping_criteria=[LevelsetStoppingCriterion(sc_fieldline.dist)])
-    t2 = time.time()
-    proc0_print(f"Time for fieldline tracing={t2-t1:.3f}s. Num steps={sum([len(l) for l in fieldlines_tys])//nfieldlines}", flush=True)
-    if comm_world is None or comm_world.rank == 0:
-        particles_to_vtk(fieldlines_tys, str(out_dir / f'fieldlines_{label}'))
-        plot_poincare_data(fieldlines_phi_hits, phis, str(out_dir + f'poincare_fieldline_{label}.png'), dpi=150)
-
-
-# uncomment this to run tracing using the biot savart field (very slow!)
-# trace_fieldlines(bs, 'bs')
-
-
-# Bounds for the interpolated magnetic field chosen so that the surface is
-# entirely contained in it
-nfieldlines = 30 if in_github_actions else 10
-tmax_fl = 10000 if in_github_actions else 20000
-degree = 2 if in_github_actions else 4
-n = 20
-rs = np.linalg.norm(s.gamma()[:, :, 0:2], axis=2)
-zs = s.gamma()[:, :, 2]
-rrange = (np.min(rs), np.max(rs), n)
-phirange = (0, 2*np.pi/s.nfp, n*2)
-# exploit stellarator symmetry and only consider positive z values:
-zrange = (0, np.max(zs), n//2)
-
-
-def skip(rs, phis, zs):
-    # The RegularGrindInterpolant3D class allows us to specify a function that
-    # is used in order to figure out which cells to be skipped.  Internally,
-    # the class will evaluate this function on the nodes of the regular mesh,
-    # and if *all* of the eight corners are outside the domain, then the cell
-    # is skipped.  Since the surface may be curved in a way that for some
-    # cells, all mesh nodes are outside the surface, but the surface still
-    # intersects with a cell, we need to have a bit of buffer in the signed
-    # distance (essentially blowing up the surface a bit), to avoid ignoring
-    # cells that shouldn't be ignored
-    rphiz = np.asarray([rs, phis, zs]).T.copy()
-    dists = sc_fieldline.evaluate_rphiz(rphiz)
-    skip = list((dists < -0.05).flatten())
-    proc0_print("Skip", sum(skip), "cells out of", len(skip), flush=True)
-    return skip
-
-
-bsh = InterpolatedField(
-    bs, degree, rrange, phirange, zrange, True, nfp=s.nfp, stellsym=True, skip=skip
-)
-
-bsh.set_points(s.gamma().reshape((-1, 3)))
-bs.set_points(s.gamma().reshape((-1, 3)))
-Bh = bsh.B()
-trace_fieldlines(bsh, 'bsh')
 
 t_end = time.time()
 print('Total time = ', t_end - t_start)
