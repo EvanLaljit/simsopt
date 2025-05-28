@@ -38,6 +38,8 @@ from pathlib import Path
 
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 from simsopt.field import BiotSavart, DipoleField
 from simsopt.geo import PermanentMagnetGrid, SurfaceRZFourier
 from simsopt.objectives import SquaredFlux
@@ -119,24 +121,24 @@ pm_opt = PermanentMagnetGrid.geo_setup_between_toroidal_surfaces(
     s, Bnormal, s_inner, s_outer, **kwargs_geo
 )
 
-#Set up gaussian noise
+# Set up gaussian noise
 mean = 0.0
-sigma = np.max(pm_opt.m_maxima) * 1e-2
+sigma = pm_opt.m_maxima * 1e-2
+# sigma = sigma[None,:,None] if sigma is of size pm_opt.ndipoles 
 S = 500
+
 # new obj func is Expected_Value[(A@(m+e)-b)^2] ~ 1/S * sum (A@(m+e_s)-b)^2 
-# for S samples of e ~ N(mean, sigma)
+# for S samples of e ~ N(mean, sigma^2)
 # where e is a random vector added to m --> m' = m + e
-c = np.zeros_like(pm_opt.b_obj)
-sum_c_i_norm_sq = 0
-for i in range(S):
-    e_s = np.random.normal(loc=mean, scale=sigma, size=pm_opt.ndipoles * 3)   
-    c_s = pm_opt.A_obj @ e_s - pm_opt.b_obj #c_s = A@e_s - b
-    c += c_s # sum over c_s
-    sum_c_i_norm_sq += np.sum(c_s ** 2) # sum over ||c_s||^2
+
+E = np.random.normal(loc=mean, scale=sigma[None,:,None], size=(S, pm_opt.ndipoles,3)) 
+E = E.reshape(S, pm_opt.ndipoles*3)
+# e_sum = np.sum(E, axis=0); sum e_s over S samples
+c = pm_opt.A_obj@np.sum(E, axis=0) - S*pm_opt.b_obj
 
 # Set some hyperparameters for the optimization
 kwargs = initialize_default_kwargs()
-kwargs['max_iter'] = 20  # Number of iterations to take in a convex step
+kwargs['max_iter'] = 50  # Number of iterations to take in a convex step
 kwargs['max_iter_RS'] = 1  # Number of iterations to take in a relax-and-split step
 kwargs['reg_l0'] = 0.0
 kwargs['reg_l1'] = 0.0
@@ -144,7 +146,9 @@ kwargs['reg_l1'] = 0.0
 # Optimize the permanent magnets. This actually solves
 # 2 full relax-and-split problems, and uses the result of each
 # problem to initialize the next, increasing L0 threshold each time,
-# until thresholding over all magnets with strengths < 50% the max.
+# until thresholding over all magnets with strengths < 5
+# 0% the max.
+
 m0 = np.zeros(pm_opt.ndipoles * 3)
 total_m_history = []
 total_mproxy_history = []
@@ -156,6 +160,26 @@ for i in range(1):
     total_mproxy_history.append(m_proxy_history)
     total_RS_history.append(RS_history)
     m0 = pm_opt.m
+    
+#cannot vectorize due to large memory, S~2^18 ~ 200,000 ??
+#plot fB_s = 0.5 |A(m+e_s)-b|^2, not E(fB_s)
+fB_s_data = []
+samples_after_opt = int(1e4)
+for i in range(samples_after_opt):
+    e_s = np.random.normal(loc=mean,scale=sigma[:,None],size=(pm_opt.ndipoles,3))
+    e_s = e_s.reshape(pm_opt.ndipoles*3)
+    fB_s_data.append(0.5 * np.sum((pm_opt.A_obj@(pm_opt.m+e_s)-pm_opt.b_obj)**2))
+    if i % int(samples_after_opt/10) == 0:
+        print("Sample", i, "fB_s = ", fB_s_data[-1])
+        
+plt.figure()
+plt.hist(fB_s_data, bins=50)
+plt.xlabel('fB_s')
+plt.ylabel('Count')
+plt.title('Histogram of fB_s_data')
+plt.tight_layout()
+plt.savefig(out_dir / "fB_s_histogram.png")
+plt.close()
 
 total_RS_history = np.ravel(np.array(total_RS_history))
 
@@ -191,11 +215,12 @@ b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
 b_dipole._toVTK(out_dir / "Dipole_Fields")
 
 # Print optimized metrics
-print("Total fB (stochastic) = ",
-      0.5*(np.sum((pm_opt.A_obj @ pm_opt.m + c/S)**2) - np.sum((c/S)**2) + sum_c_i_norm_sq/S)) 
 
-print("Total fB (determinsitic)= ",
-      0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2))
+print("Total fB (Stochastic) = ",
+    (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1)))
+
+print("Total fB (Deterministic) = ",
+      np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2) / 2.0)
 
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)
