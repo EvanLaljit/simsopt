@@ -123,9 +123,9 @@ pm_opt = PermanentMagnetGrid.geo_setup_between_toroidal_surfaces(
 
 # Set up gaussian noise
 mean = 0.0
-sigma = pm_opt.m_maxima * 1e-2
+sigma = pm_opt.m_maxima * 1e-3
 # sigma = sigma[None,:,None] if sigma is of size pm_opt.ndipoles 
-S = 500
+S = 1000
 
 # new obj func is Expected_Value[(A@(m+e)-b)^2] ~ 1/S * sum (A@(m+e_s)-b)^2 
 # for S samples of e ~ N(mean, sigma^2)
@@ -161,29 +161,35 @@ for i in range(1):
     total_RS_history.append(RS_history)
     m0 = pm_opt.m
     
+total_RS_history = np.ravel(np.array(total_RS_history))
+
+print('Done optimizing the permanent magnet object')
+
 #cannot vectorize due to large memory, S~2^18 ~ 200,000 ??
 #plot fB_s = 0.5 |A(m+e_s)-b|^2, not E(fB_s)
 fB_s_data = []
-samples_after_opt = int(1e4)
-for i in range(samples_after_opt):
+samples_after_opt = 1e4
+for i in range(int(samples_after_opt)):
     e_s = np.random.normal(loc=mean,scale=sigma[:,None],size=(pm_opt.ndipoles,3))
     e_s = e_s.reshape(pm_opt.ndipoles*3)
     fB_s_data.append(0.5 * np.sum((pm_opt.A_obj@(pm_opt.m+e_s)-pm_opt.b_obj)**2))
     if i % int(samples_after_opt/10) == 0:
         print("Sample", i, "fB_s = ", fB_s_data[-1])
         
-plt.figure()
+total_fB = (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1))
+
+plt.figure(figsize=(10,10))
 plt.hist(fB_s_data, bins=50)
 plt.xlabel('fB_s')
 plt.ylabel('Count')
-plt.title('Histogram of fB_s_data')
+plt.title(
+    "Histogram of fB\n"
+    "$fB = \\frac{{1}}{{S}} \\sum_{{s=1}}^S 0.5 |A(m+e_s)-b|^2 = {:.4e}$\n"
+    "$\\mathbb{{E}}[fB_s] = {:.4e}$".format(total_fB, np.mean(fB_s_data))
+)
 plt.tight_layout()
-plt.savefig(out_dir / "fB_s_histogram.png")
+plt.savefig(out_dir / "fB_s_stochastic_histogram.png")
 plt.close()
-
-total_RS_history = np.ravel(np.array(total_RS_history))
-
-print('Done optimizing the permanent magnet object')
 
 # Try to make a mp4 movie of the optimization progress
 try:
@@ -217,10 +223,13 @@ b_dipole._toVTK(out_dir / "Dipole_Fields")
 # Print optimized metrics
 
 print("Total fB (Stochastic) = ",
-    (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1)))
+    total_fB)
 
-print("Total fB (Deterministic) = ",
-      np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2) / 2.0)
+print("Expected Value of fB_s = ", np.mean(fB_s_data))
+#print if sigma = 0
+
+# print("Total fB (Deterministic) = ",
+#       np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2) / 2.0)
 
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)

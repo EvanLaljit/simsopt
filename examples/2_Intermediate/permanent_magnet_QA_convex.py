@@ -163,7 +163,8 @@ kwargs['reg_l1'] = 0.0
 # 2 full relax-and-split problems, and uses the result of each
 # problem to initialize the next, increasing L0 threshold each time,
 # until thresholding over all magnets with strengths < 50% the max.
-m0 = np.random.normal(loc=0.0,scale=1e-2,size=pm_opt.ndipoles * 3) #initial guess, random 
+
+m0 = np.zeros(pm_opt.ndipoles*3) #initial guess, random or zeros
 total_m_history = []
 total_mproxy_history = []
 total_RS_history = []
@@ -175,31 +176,37 @@ for i in range(1):
     total_RS_history.append(RS_history)
     m0 = pm_opt.m
     
+total_RS_history = np.ravel(np.array(total_RS_history))
+
+print('Done optimizing the permanent magnet object')
+
 mean = 0.0
-sigma = pm_opt.m_maxima * 1e-2
+sigma = pm_opt.m_maxima * 1e-3
 
 #cannot vectorize due to large memory, S~2^18 ~ 200,000 ??
 #plot fB_s = 0.5 |A(m+e_s)-b|^2, not E(fB_s)
 fB_s_data = []
-samples_after_opt = int(1e4)
-for i in range(samples_after_opt):
+samples_after_opt = 1e4
+for i in range(int(samples_after_opt)):
     e_s = np.random.normal(loc=mean,scale=sigma[:,None],size=(pm_opt.ndipoles,3))
     e_s = e_s.reshape(pm_opt.ndipoles*3)
     fB_s_data.append(0.5 * np.sum((pm_opt.A_obj@(pm_opt.m+e_s)-pm_opt.b_obj)**2))
     if i % int(samples_after_opt/10) == 0:
         print("Sample", i, "fB_s = ", fB_s_data[-1])
         
-plt.figure()
+total_fB = 0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2)
+plt.figure(figsize=(10,10))
 plt.hist(fB_s_data, bins=50)
 plt.xlabel('fB_s')
 plt.ylabel('Count')
-plt.title('Histogram of fB_s_data')
+plt.title(
+    "Histogram of fB\n"
+    "$fB = 0.5 |Am-b|^2 = {:.4e}$\n"
+    "$\\mathbb{{E}}[fB_s] = {:.4e}$".format(total_fB, np.mean(fB_s_data))
+)
 plt.tight_layout()
-plt.savefig(out_dir / "fB_s_histogram.png")
+plt.savefig(out_dir / "fB_s_deterministic_histogram.png")
 plt.close()
-total_RS_history = np.ravel(np.array(total_RS_history))
-
-print('Done optimizing the permanent magnet object')
 
 # Try to make a mp4 movie of the optimization progress
 try:
@@ -232,7 +239,8 @@ b_dipole._toVTK(out_dir / "Dipole_Fields")
 
 # Print optimized metrics
 print("Total fB = ",
-      0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2))
+      total_fB)
+print("Expected Value of fB_s = ", np.mean(fB_s_data))
 
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)
