@@ -1,66 +1,56 @@
-#!/usr/bin/env python
+#!/usr/bin/env 
 r"""
-This simple example script allows the user to explore building
-permanent magnet configurations for the Landreman/Paul QA design with
-basic cylindrical brick magnets.
-
-For realistic designs, please see the script files at
-https://github.com/akaptano/simsopt_permanent_magnet_advanced_scripts.git
-which can generate all of the results in the recent relax-and-split
-and GPMO permanent magnet optimization papers:
-    
+This example script uses the GPMO
+greedy algorithm for solving permanent 
+magnet optimization on the MUSE grid. This 
+algorithm is described in the following paper:
     A. A. Kaptanoglu, R. Conlin, and M. Landreman, 
     Greedy permanent magnet optimization, 
     Nuclear Fusion 63, 036016 (2023)
-    
-    A. A. Kaptanoglu, T. Qian, F. Wechsung, and M. Landreman. 
-    Permanent-Magnet Optimization for Stellarators as Sparse Regression.
-    Physical Review Applied 18, no. 4 (2022): 044006.
-
-This example uses the relax-and-split algorithm for 
-high-dimensional sparse regression. See the other examples 
-for using the greedy GPMO algorithm to solve the problem.
 
 The script should be run as:
-    mpirun -n 1 python permanent_magnet_QA.py
+    mpirun -n 1 python permanent_magnet_MUSE.py
 on a cluster machine but 
-    python permanent_magnet_QA.py
+    python permanent_magnet_MUSE.py
 is sufficient on other machines. Note that this code does not use MPI, but is 
 parallelized via OpenMP and XSIMD, so will run substantially
 faster on multi-core machines (make sure that all the cores
 are available to OpenMP, e.g. through setting OMP_NUM_THREADS).
 
-CONVEX ONLY, L0=L1=L2=0
+For high-resolution and more realistic designs, please see the script files at
+https://github.com/akaptano/simsopt_permanent_magnet_advanced_scripts.git
 """
 
 import time
 from pathlib import Path
 
 import numpy as np
-
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 
 from simsopt.field import BiotSavart, DipoleField
 from simsopt.geo import PermanentMagnetGrid, SurfaceRZFourier
 from simsopt.objectives import SquaredFlux
-from simsopt.solve import relax_and_split
-from simsopt.util import in_github_actions
+from simsopt.solve import relax_and_split_stochastic
+from simsopt.util import FocusData, discretize_polarizations, polarization_axes, in_github_actions
 from simsopt.util.permanent_magnet_helper_functions import *
-
 
 t_start = time.time()
 
 # Set some parameters -- if doing CI, lower the resolution
 if in_github_actions:
-    nphi = 64  # nphi = ntheta >= 64 needed for accurate full-resolution runs
-    ntheta = nphi
-    dr = 0.05  # cylindrical bricks with radial extent 5 cm
+    nphi = 2
+    nIter_max = 100
+    nBacktracking = 50
+    max_nMagnets = 20
+    downsample = 100  # downsample the FAMUS grid of magnets by this factor
 else:
-    nphi = 64  # nphi = ntheta >= 64 needed for accurate full-resolution runs
-    ntheta = 64
-    dr = 0.02  # cylindrical bricks with radial extent 2 cm
-    
-#Poincare plot parameters
+    nphi = 64  # >= 64 for high-resolution runs
+    nIter_max = 30000
+    nBacktracking = 200
+    max_nMagnets = 30000
+    downsample = 12
+   
+#Poincare plot parameters 
 tol = 1e-10
 nfieldlines = 30 #30
 tmax_fl = 20000 #10k
@@ -69,8 +59,9 @@ n = 40 #20
 
 #noise parameters
 mean = 0.0
-sigma_factor = 1
-samples_after_opt = 1e3
+sigma_factor = 10
+S = 1000
+samples_after_opt = 1e3 #4.980404494045851e-07
 
 #algorithm parameters
 max_iter = 50  # Number of iterations to take in a convex step
@@ -79,27 +70,25 @@ reg_l0 = 0.0  # L0 regularization parameter
 reg_l1 = 0.0  # L1 regularization parameter
 relax_and_split_iteration = 1 # Number of relax-and-split iterations to perform
 
-coff = 0.1  # PM grid starts offset ~ 10 cm from the plasma surface
-poff = 0.05  # PM grid end offset ~ 15 cm from the plasma surface
-input_name = 'input.LandremanPaul2021_QA_lowres'
+ntheta = nphi  # same as above
+dr = 0.01  # Radial extent in meters of the cylindrical permanent magnet bricks
+input_name = 'input.muse'
 
-# Read in the plas/ma equilibrium file
+# Read in the plasma equilibrium file
 TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolve()
+famus_filename = TEST_DIR / 'zot80.focus'
 surface_filename = TEST_DIR / input_name
-s = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
-s_inner = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
-s_outer = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+s = SurfaceRZFourier.from_focus(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+s_inner = SurfaceRZFourier.from_focus(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+s_outer = SurfaceRZFourier.from_focus(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
 
-# Make the inner and outer surfaces by extending the plasma surface
-s_inner.extend_via_projected_normal(poff)
-s_outer.extend_via_projected_normal(poff + coff)
-
-# Make the output directory
-out_dir = Path("output_permanent_magnet_QA_convex")
+# Make the output directory -- warning, saved data can get big!
+# On NERSC, recommended to change this directory to point to SCRATCH!
+out_dir = Path("output_permanent_magnet_RS_MUSE_stochastic")
 out_dir.mkdir(parents=True, exist_ok=True)
 
 # initialize the coils
-base_curves, curves, coils = initialize_coils('qa', TEST_DIR, s, out_dir)
+base_curves, curves, coils = initialize_coils('muse_famus', TEST_DIR, s, out_dir)
 
 # Set up BiotSavart fields
 bs = BiotSavart(coils)
@@ -111,7 +100,7 @@ calculate_modB_on_major_radius(bs, s)
 qphi = 2 * nphi
 quadpoints_phi = np.linspace(0, 1, qphi, endpoint=True)
 quadpoints_theta = np.linspace(0, 1, ntheta, endpoint=True)
-s_plot = SurfaceRZFourier.from_vmec_input(
+s_plot = SurfaceRZFourier.from_focus(
     surface_filename,
     quadpoints_phi=quadpoints_phi,
     quadpoints_theta=quadpoints_theta
@@ -120,23 +109,34 @@ s_plot = SurfaceRZFourier.from_vmec_input(
 # Plot initial Bnormal on plasma surface from un-optimized BiotSavart coils
 make_Bnormal_plots(bs, s_plot, out_dir, "biot_savart_initial")
 
-# optimize the currents in the TF coils
-bs = coil_optimization(s, bs, base_curves, curves, out_dir)
-bs.set_points(s.gamma().reshape((-1, 3)))
-Bnormal = np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)
-
-# check after-optimization average on-axis magnetic field strength
-calculate_modB_on_major_radius(bs, s)
-
 # Set up correct Bnormal from TF coils
 bs.set_points(s.gamma().reshape((-1, 3)))
 Bnormal = np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)
 
+# pol_vectors is only used for the greedy algorithms with cartesian coordinate_flag
+# which is the default, so no need to specify it here.
+kwargs_geo = {"downsample": downsample, "dr": dr}
+
 # Finally, initialize the permanent magnet class
-kwargs_geo = {"dr": dr, "coordinate_flag": "cylindrical"}
-pm_opt = PermanentMagnetGrid.geo_setup_between_toroidal_surfaces(
-    s, Bnormal, s_inner, s_outer, **kwargs_geo
-)
+pm_opt = PermanentMagnetGrid.geo_setup_from_famus(s, Bnormal, famus_filename, **kwargs_geo)
+
+print('Number of available dipoles = ', pm_opt.ndipoles)
+
+print(np.max(pm_opt.m_maxima),np.min(pm_opt.m_maxima),np.mean(pm_opt.m_maxima), np.std(pm_opt.m_maxima))
+
+
+# Set up gaussian noise
+sigma = pm_opt.m_maxima * sigma_factor
+# sigma = sigma[None,:,None] if sigma is of size pm_opt.ndipoles 
+
+# new obj func is Expected_Value[(A@(m+e)-b)^2] ~ 1/S * sum (A@(m+e_s)-b)^2 
+# for S samples of e ~ N(mean, sigma^2)
+# where e is a random vector added to m --> m' = m + e
+
+E = np.random.normal(loc=mean, scale=sigma[None,:,None], size=(S, pm_opt.ndipoles,3)) 
+E = E.reshape(S, pm_opt.ndipoles*3)
+# e_sum = np.sum(E, axis=0); sum e_s over S samples
+c = pm_opt.A_obj@np.sum(E, axis=0) - S*pm_opt.b_obj
 
 # Set some hyperparameters for the optimization
 kwargs = initialize_default_kwargs()
@@ -148,15 +148,16 @@ kwargs['reg_l1'] = reg_l1
 # Optimize the permanent magnets. This actually solves
 # 2 full relax-and-split problems, and uses the result of each
 # problem to initialize the next, increasing L0 threshold each time,
-# until thresholding over all magnets with strengths < 50% the max.
+# until thresholding over all magnets with strengths < 5
+# 0% the max.
 
-m0 = np.zeros(pm_opt.ndipoles*3) #initial guess, random or zeros
+m0 = np.zeros(pm_opt.ndipoles * 3)
 total_m_history = []
 total_mproxy_history = []
 total_RS_history = []
 for i in range(relax_and_split_iteration):
     print('Relax-and-split iteration ', i)
-    RS_history, m_history, m_proxy_history = relax_and_split(pm_opt, m0=m0, **kwargs)
+    RS_history, m_history, m_proxy_history = relax_and_split_stochastic(pm_opt, -c/S, m0=m0, **kwargs)
     total_m_history.append(m_history)
     total_mproxy_history.append(m_proxy_history)
     total_RS_history.append(RS_history)
@@ -167,46 +168,35 @@ total_RS_history = np.ravel(np.array(total_RS_history))
 print('Done optimizing the permanent magnet object')
 
 #plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
-sigma = pm_opt.m_maxima * sigma_factor 
 fB_s_data = []
+
 for i in range(int(samples_after_opt)):
     e_s = np.random.normal(loc=mean,scale=sigma[:,None],size=(pm_opt.ndipoles,3))
     e_s = e_s.reshape(pm_opt.ndipoles*3)
     fB_s_data.append(0.5 * np.sum((pm_opt.A_obj@(pm_opt.m+e_s)-pm_opt.b_obj)**2))
     if i % int(samples_after_opt/10) == 0:
         print("Sample", i, "mean[fB_s] = ", np.mean(fB_s_data))
-        
-#plot max_m, max_m/m, and (m/e_s), averaged over all samples
-m_to_perturb_ratio /= samples_after_opt    
+
 #plot fb_s data and label fB and E(fB_s)
-total_fB = 0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2)
+total_fB = (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1))
 plt.figure(figsize=(10,10))
 plt.hist(fB_s_data, bins=50)
 plt.xlabel('fB_s')
 plt.ylabel('Count')
 plt.title(
-    "Histogram of fB\n"
-    "$fB = 0.5 |Am-b|^2 = {:.4e}$\n"
+    "Histogram of fB (Relax and Split Convex)\n"
+    "$fB = \\frac{{1}}{{S}} \\sum_{{s=1}}^S 0.5 |A(m+e_s)-b|^2 = {:.4e}$\n"
     "$\\mathbb{{E}}[fB_s] = {:.4e}$".format(total_fB, np.mean(fB_s_data))
 )
 plt.tight_layout()
-plt.savefig(out_dir / "fB_s_deterministic_histogram.png")
-plt.close()
-#plot pm_opt.m_maxima
-plt.figure()
-plt.hist(pm_opt.m_maxima,bins=50)
-plt.xlabel('m_max')
-plt.ylabel('Count')
-plt.title('Histogram of m_max')
-plt.tight_layout()
-plt.savefig(out_dir / "m_max_histogram.png")
+plt.savefig(out_dir / "fB_s_stochastic_histogram.png")
 plt.close()
 #plot m/m_max
 plt.figure()
 m = pm_opt.m.reshape(pm_opt.ndipoles, 3)
 m_mag = np.sqrt((np.sum(m ** 2, axis=1)))
 plt.figure()
-plt.hist(m_mag/pm_opt.m_maxima,bins=50)
+plt.hist(m_mag/pm_opt.m_maxima,bins=np.linspace(0.7,1.3,500))
 plt.xlabel('m/m_max')
 plt.ylabel('Count')
 plt.title('Histogram of m/m_max')
@@ -221,12 +211,12 @@ except ValueError:
         'Attempted to make a mp4 of optimization progress but ValueError was raised. '
         'This is probably an indication that a mp4 python writer was not available for use.'
     )
-
+    
 # Print effective permanent magnet volume
 B_max = 1.465
 mu0 = 4 * np.pi * 1e-7
 M_max = B_max / mu0
-dipoles = pm_opt.m_proxy.reshape(pm_opt.ndipoles, 3)
+dipoles = pm_opt.m.reshape(pm_opt.ndipoles, 3)
 print('Volume of permanent magnets is = ', np.sum(np.sqrt(np.sum(dipoles ** 2, axis=-1))) / M_max)
 print('sum(|m_i|)', np.sum(np.sqrt(np.sum(dipoles ** 2, axis=-1))))
 
@@ -248,7 +238,6 @@ make_Bnormal_plots(bs, s_plot, out_dir, "biot_savart_optimized")
 Bnormal_dipoles = np.sum(b_dipole.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=-1)
 Bnormal_total = Bnormal + Bnormal_dipoles
 
-
 # Compute metrics with permanent magnet results
 dipoles_m = pm_opt.m.reshape(pm_opt.ndipoles, 3)
 num_nonzero = np.count_nonzero(np.sum(dipoles_m ** 2, axis=-1)) / pm_opt.ndipoles * 100
@@ -261,7 +250,7 @@ make_Bnormal_plots(b_dipole, s_plot, out_dir, "only_m_optimized")
 pointData = {"B_N": Bnormal_total[:, :, None]}
 s_plot.to_vtk(out_dir / "m_optimized", extra_data=pointData)
 
-# Print optimized f_B and other metrics
+# Print optimized f_B and other metrics--------------------------------------------------------------------------------------
 ratio = m_mag / pm_opt.m_maxima
 print("m/m_maxima statistics:")
 print("Min:", np.min(ratio))
@@ -270,9 +259,13 @@ print("Median:", np.median(ratio))
 print("Mean:", np.mean(ratio))
 print("Std:", np.std(ratio))
 
-print("Total fB (Deterministic)= ",
+print("Total fB (Stochastic)= ",
       total_fB)
 print("Expected Value of fB_s = ", np.mean(fB_s_data))
+
+if sigma_factor == 0.0:
+    print("Total fB (Deterministic) = ",
+        np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2) / 2.0)
 
 f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
 print('f_B = ', f_B_sf)

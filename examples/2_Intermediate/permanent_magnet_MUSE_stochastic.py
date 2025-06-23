@@ -1,4 +1,4 @@
-#!/usr/bin/env  
+#!/usr/bin/env  “export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASKpython
 r"""
 This example script uses the GPMO
 greedy algorithm for solving permanent 
@@ -30,7 +30,7 @@ from matplotlib import pyplot as plt
 from simsopt.field import BiotSavart, DipoleField
 from simsopt.geo import PermanentMagnetGrid, SurfaceRZFourier
 from simsopt.objectives import SquaredFlux
-from simsopt.solve import GPMO
+from simsopt.solve import GPMO_stochastic
 from simsopt.util import FocusData, discretize_polarizations, polarization_axes, in_github_actions
 from simsopt.util.permanent_magnet_helper_functions import *
 
@@ -45,11 +45,11 @@ if in_github_actions:
     downsample = 100  # downsample the FAMUS grid of magnets by this factor
 else:
     nphi = 64  # >= 64 for high-resolution runs
-    nIter_max = 30000
+    nIter_max = 10000
     nBacktracking = 200
-    max_nMagnets = 30000
-    downsample = 8
-
+    max_nMagnets = 10000
+    downsample = 2
+    
 #Poincare plot parameters
 tol = 1e-10
 nfieldlines = 30 #30
@@ -59,8 +59,9 @@ n = 40 #20
 
 #noise parameters
 mean = 0.0
-sigma_factor = 100
-samples_after_opt = 1e3
+sigma_factor = 1
+S = 1000
+samples_after_opt = 1e3 #3.401931495093141e-07
 
 algorithm = 'baseline'  # Algorithm to use
 
@@ -78,7 +79,7 @@ s_outer = SurfaceRZFourier.from_focus(surface_filename, range="half period", nph
 
 # Make the output directory -- warning, saved data can get big!
 # On NERSC, recommended to change this directory to point to SCRATCH!
-out_dir = Path("output_permanent_magnet_GPMO_MUSE")
+out_dir = Path("output_permanent_magnet_GPMO_MUSE_stochastic")
 out_dir.mkdir(parents=True, exist_ok=True)
 
 # initialize the coils
@@ -154,6 +155,19 @@ pm_opt = PermanentMagnetGrid.geo_setup_from_famus(s, Bnormal, famus_filename, **
 
 print('Number of available dipoles = ', pm_opt.ndipoles)
 
+# Set up gaussian noise
+sigma = pm_opt.m_maxima * sigma_factor  # scale the noise by the maximum magnet strength
+# sigma = sigma[None,:,None] if sigma is of size pm_opt.ndipoles 
+
+# new obj func is Expected_Value[(A@(m+e)-b)^2] ~ 1/S * sum (A@(m+e_s)-b)^2 
+# for S samples of e ~ N(mean, sigma^2)
+# where e is a random vector added to m --> m' = m + e
+
+E = np.random.normal(loc=mean, scale=sigma[None,:,None], size=(S, pm_opt.ndipoles,3)) 
+E = E.reshape(S, pm_opt.ndipoles*3)
+# e_sum = np.sum(E, axis=0); sum e_s over S samples
+c = pm_opt.A_obj@np.sum(E, axis=0) - S*pm_opt.b_obj
+
 # Set some hyperparameters for the optimization
 algorithm = algorithm  # Algorithm to use
 nAdjacent = 10  # How many magnets to consider "adjacent" to one another
@@ -172,7 +186,7 @@ if algorithm == 'backtracking' or algorithm == 'ArbVec_backtracking':
 
 # Optimize the permanent magnets greedily
 t1 = time.time()
-R2_history, Bn_history, m_history = GPMO(pm_opt, algorithm, **kwargs)
+R2_history, Bn_history, m_history = GPMO_stochastic(pm_opt, -c/S, algorithm, **kwargs)
 t2 = time.time()
 print('GPMO took t = ', t2 - t1, ' s')
 print(len(pm_opt.m))
@@ -186,14 +200,13 @@ plt.grid(True)
 plt.xlabel('K')
 plt.ylabel('Metric values')
 plt.legend()
-plt.savefig(out_dir / 'GPMO_MSE_history.png')
+plt.savefig(out_dir / 'GPMO_Stochastic_MSE_history.png')
 
 # Set final m to the minimum achieved during the optimization
 min_ind = np.argmin(R2_history)
 pm_opt.m = np.ravel(m_history[:, :, min_ind])
 
 #plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
-sigma = pm_opt.m_maxima * sigma_factor
 fB_s_data = []
 for i in range(int(samples_after_opt)):
     e_s = np.random.normal(loc=mean,scale=sigma[:,None],size=(pm_opt.ndipoles,3))
@@ -203,18 +216,18 @@ for i in range(int(samples_after_opt)):
         print("Sample", i, "mean[fB_s] = ", np.mean(fB_s_data))
 
 #plot fb_s data and label fB and E(fB_s)
-total_fB = 0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2)
+total_fB = (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1))
 plt.figure(figsize=(10,10))
 plt.hist(fB_s_data, bins=50)
 plt.xlabel('fB_s')
 plt.ylabel('Count')
 plt.title(
     "Histogram of fB (GPMO)\n"
-    "$fB = 0.5 |Am-b|^2 = {:.4e}$\n"
+    "$fB = \\frac{{1}}{{S}} \\sum_{{s=1}}^S 0.5 |A(m+e_s)-b|^2 = {:.4e}$\n"
     "$\\mathbb{{E}}[fB_s] = {:.4e}$".format(total_fB, np.mean(fB_s_data))
 )
 plt.tight_layout()
-plt.savefig(out_dir / "fB_s_deterministic_histogram.png")
+plt.savefig(out_dir / "fB_s_stochastic_histogram.png")
 plt.close()
 #plot m/m_max
 plt.figure()
@@ -283,10 +296,9 @@ num_nonzero = np.count_nonzero(np.sum(dipoles_m ** 2, axis=-1)) / pm_opt.ndipole
 print("Number of possible dipoles = ", pm_opt.ndipoles)
 print("% of dipoles that are nonzero = ", num_nonzero)
 
-# Print optimized f_B and other metrics
+# Print optimized f_B and other metrics----------------------------------------------
 ### Note this will only agree with the optimization in the high-resolution
 ### limit where nphi ~ ntheta >= 64!
-print("Best iteration is", min_ind, "out of", nIter_max,"total iterations")
 ratio = m_mag / pm_opt.m_maxima
 print("m/m_maxima statistics:")
 print("Min:", np.min(ratio))
@@ -295,10 +307,14 @@ print("Median:", np.median(ratio))
 print("Mean:", np.mean(ratio))
 print("Std:", np.std(ratio))
 
-print("Total fB (Deterministic) = ",
+print("Total fB (Stochastic) = ",
     total_fB)
 
 print("Expected Value of fB_s = ", np.mean(fB_s_data))
+
+if sigma_factor == 0.0:
+    print("Total fB (Deterministic) = ",
+        np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2) / 2.0)
 
 b_dipole = DipoleField(
     pm_opt.dipole_grid_xyz,
@@ -344,6 +360,7 @@ if vmec_flag:
 
 
 #------------------------------------------------
+
 
 
 t_end = time.time()

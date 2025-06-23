@@ -61,6 +61,26 @@ else:
     nphi = 64  # nphi = ntheta >= 64 needed for accurate full-resolution runs
     ntheta = 64
     dr = 0.02  # cylindrical bricks with radial extent 2 cm
+    
+#Poincare plot parameters 
+tol = 1e-10
+nfieldlines = 30 #30
+tmax_fl = 20000 #10k
+degree = 4
+n = 40 #20
+
+#noise parameters
+mean = 0.0
+sigma_factor = 1
+S = 1000
+samples_after_opt = 1e3
+
+#algorithm parameters
+max_iter = 50  # Number of iterations to take in a convex step
+max_iter_RS = 1  # Number of iterations to take in a relax-and-split step
+reg_l0 = 0.0  # L0 regularization parameter
+reg_l1 = 0.0  # L1 regularization parameter
+relax_and_split_iteration = 1 # Number of relax-and-split iterations to perform
 
 coff = 0.1  # PM grid starts offset ~ 10 cm from the plasma surface
 poff = 0.05  # PM grid end offset ~ 15 cm from the plasma surface
@@ -122,10 +142,8 @@ pm_opt = PermanentMagnetGrid.geo_setup_between_toroidal_surfaces(
 )
 
 # Set up gaussian noise
-mean = 0.0
-sigma = pm_opt.m_maxima * 1e-3
+sigma = pm_opt.m_maxima * sigma_factor
 # sigma = sigma[None,:,None] if sigma is of size pm_opt.ndipoles 
-S = 1000
 
 # new obj func is Expected_Value[(A@(m+e)-b)^2] ~ 1/S * sum (A@(m+e_s)-b)^2 
 # for S samples of e ~ N(mean, sigma^2)
@@ -138,10 +156,10 @@ c = pm_opt.A_obj@np.sum(E, axis=0) - S*pm_opt.b_obj
 
 # Set some hyperparameters for the optimization
 kwargs = initialize_default_kwargs()
-kwargs['max_iter'] = 50  # Number of iterations to take in a convex step
-kwargs['max_iter_RS'] = 1  # Number of iterations to take in a relax-and-split step
-kwargs['reg_l0'] = 0.0
-kwargs['reg_l1'] = 0.0
+kwargs['max_iter'] = max_iter  # Number of iterations to take in a convex step
+kwargs['max_iter_RS'] = max_iter_RS  # Number of iterations to take in a relax-and-split step
+kwargs['reg_l0'] = reg_l0
+kwargs['reg_l1'] = reg_l1
 
 # Optimize the permanent magnets. This actually solves
 # 2 full relax-and-split problems, and uses the result of each
@@ -153,7 +171,7 @@ m0 = np.zeros(pm_opt.ndipoles * 3)
 total_m_history = []
 total_mproxy_history = []
 total_RS_history = []
-for i in range(1):
+for i in range(relax_and_split_iteration):
     print('Relax-and-split iteration ', i)
     RS_history, m_history, m_proxy_history = relax_and_split_stochastic(pm_opt, -c/S, m0=m0, **kwargs)
     total_m_history.append(m_history)
@@ -165,19 +183,17 @@ total_RS_history = np.ravel(np.array(total_RS_history))
 
 print('Done optimizing the permanent magnet object')
 
-#cannot vectorize due to large memory, S~2^18 ~ 200,000 ??
-#plot fB_s = 0.5 |A(m+e_s)-b|^2, not E(fB_s)
+#plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
 fB_s_data = []
-samples_after_opt = 1e4
 for i in range(int(samples_after_opt)):
     e_s = np.random.normal(loc=mean,scale=sigma[:,None],size=(pm_opt.ndipoles,3))
     e_s = e_s.reshape(pm_opt.ndipoles*3)
     fB_s_data.append(0.5 * np.sum((pm_opt.A_obj@(pm_opt.m+e_s)-pm_opt.b_obj)**2))
     if i % int(samples_after_opt/10) == 0:
-        print("Sample", i, "fB_s = ", fB_s_data[-1])
-        
-total_fB = (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1))
+        print("Sample", i, "mean[fB_s] = ", np.mean(fB_s_data))
 
+#plot fb_s data and label fB and E(fB_s)
+total_fB = (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1))
 plt.figure(figsize=(10,10))
 plt.hist(fB_s_data, bins=50)
 plt.xlabel('fB_s')
@@ -189,6 +205,17 @@ plt.title(
 )
 plt.tight_layout()
 plt.savefig(out_dir / "fB_s_stochastic_histogram.png")
+plt.close()
+#plot m/m_max
+plt.figure()
+m = pm_opt.m.reshape(pm_opt.ndipoles, 3)
+m_mag = np.sqrt((np.sum(m ** 2, axis=1)))
+plt.figure()
+plt.hist(m_mag/pm_opt.m_maxima,bins=np.linspace(0.7,1.3,500))
+plt.xlabel('m/m_max')
+plt.ylabel('Count')
+plt.title('Histogram of m/m_max')
+plt.savefig(out_dir/ "m_over_m_max_histogram.png")
 plt.close()
 
 # Try to make a mp4 movie of the optimization progress
@@ -220,17 +247,6 @@ b_dipole = DipoleField(
 b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
 b_dipole._toVTK(out_dir / "Dipole_Fields")
 
-# Print optimized metrics
-
-print("Total fB (Stochastic) = ",
-    total_fB)
-
-print("Expected Value of fB_s = ", np.mean(fB_s_data))
-#print if sigma = 0
-
-# print("Total fB (Deterministic) = ",
-#       np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2) / 2.0)
-
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)
 make_Bnormal_plots(bs, s_plot, out_dir, "biot_savart_optimized")
@@ -249,7 +265,23 @@ make_Bnormal_plots(b_dipole, s_plot, out_dir, "only_m_optimized")
 pointData = {"B_N": Bnormal_total[:, :, None]}
 s_plot.to_vtk(out_dir / "m_optimized", extra_data=pointData)
 
-# Print optimized f_B and other metrics
+# Print optimized f_B and other metrics--------------------------------------------------------------------------------------
+ratio = m_mag / pm_opt.m_maxima
+print("m/m_maxima statistics:")
+print("Min:", np.min(ratio))
+print("Max:", np.max(ratio))
+print("Median:", np.median(ratio))
+print("Mean:", np.mean(ratio))
+print("Std:", np.std(ratio))
+
+print("Total fB (Stochastic)= ",
+      total_fB)
+print("Expected Value of fB_s = ", np.mean(fB_s_data))
+
+if sigma_factor == 0:
+    print("Total fB (Deterministic) = ",
+        np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2) / 2.0)
+
 f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
 print('f_B = ', f_B_sf)
 
