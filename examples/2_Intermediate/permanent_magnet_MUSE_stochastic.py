@@ -1,4 +1,4 @@
-#!/usr/bin/env  “export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASKpython
+#!/usr/bin/env  
 r"""
 This example script uses the GPMO
 greedy algorithm for solving permanent 
@@ -45,9 +45,9 @@ if in_github_actions:
     downsample = 100  # downsample the FAMUS grid of magnets by this factor
 else:
     nphi = 64  # >= 64 for high-resolution runs
-    nIter_max = 10000
+    nIter_max = 30000
     nBacktracking = 200
-    max_nMagnets = 10000
+    max_nMagnets = 30000
     downsample = 2
     
 #Poincare plot parameters
@@ -61,7 +61,7 @@ n = 40 #20
 mean = 0.0
 sigma_factor = 1
 S = 1000
-samples_after_opt = 1e3 #3.401931495093141e-07
+samples_after_opt = 1e3 
 
 algorithm = 'baseline'  # Algorithm to use
 
@@ -206,41 +206,6 @@ plt.savefig(out_dir / 'GPMO_Stochastic_MSE_history.png')
 min_ind = np.argmin(R2_history)
 pm_opt.m = np.ravel(m_history[:, :, min_ind])
 
-#plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
-fB_s_data = []
-for i in range(int(samples_after_opt)):
-    e_s = np.random.normal(loc=mean,scale=sigma[:,None],size=(pm_opt.ndipoles,3))
-    e_s = e_s.reshape(pm_opt.ndipoles*3)
-    fB_s_data.append(0.5 * np.sum((pm_opt.A_obj@(pm_opt.m+e_s)-pm_opt.b_obj)**2))
-    if i % int(samples_after_opt/10) == 0:
-        print("Sample", i, "mean[fB_s] = ", np.mean(fB_s_data))
-
-#plot fb_s data and label fB and E(fB_s)
-total_fB = (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1))
-plt.figure(figsize=(10,10))
-plt.hist(fB_s_data, bins=50)
-plt.xlabel('fB_s')
-plt.ylabel('Count')
-plt.title(
-    "Histogram of fB (GPMO)\n"
-    "$fB = \\frac{{1}}{{S}} \\sum_{{s=1}}^S 0.5 |A(m+e_s)-b|^2 = {:.4e}$\n"
-    "$\\mathbb{{E}}[fB_s] = {:.4e}$".format(total_fB, np.mean(fB_s_data))
-)
-plt.tight_layout()
-plt.savefig(out_dir / "fB_s_stochastic_histogram.png")
-plt.close()
-#plot m/m_max
-plt.figure()
-m = pm_opt.m.reshape(pm_opt.ndipoles, 3)
-m_mag = np.sqrt((np.sum(m ** 2, axis=1)))
-plt.figure()
-plt.hist(m_mag/pm_opt.m_maxima,bins=np.linspace(0.7,1.3,500))
-plt.xlabel('m/m_max')
-plt.ylabel('Count')
-plt.title('Histogram of m/m_max')
-plt.savefig(out_dir/ "m_over_m_max_histogram.png")
-plt.close()
-
 # Print effective permanent magnet volume
 B_max = 1.465
 mu0 = 4 * np.pi * 1e-7
@@ -296,21 +261,22 @@ num_nonzero = np.count_nonzero(np.sum(dipoles_m ** 2, axis=-1)) / pm_opt.ndipole
 print("Number of possible dipoles = ", pm_opt.ndipoles)
 print("% of dipoles that are nonzero = ", num_nonzero)
 
-# Print optimized f_B and other metrics----------------------------------------------
+# Print optimized f_B, perturbed fB and other metrics------------------------------------------
 ### Note this will only agree with the optimization in the high-resolution
 ### limit where nphi ~ ntheta >= 64!
-ratio = m_mag / pm_opt.m_maxima
-print("m/m_maxima statistics:")
-print("Min:", np.min(ratio))
-print("Max:", np.max(ratio))
-print("Median:", np.median(ratio))
-print("Mean:", np.mean(ratio))
-print("Std:", np.std(ratio))
+
+#plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
+#and save the mean fB_s
+total_fB = (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1))
+mean_fB_s = perturb_magnet(pm_opt,mean,sigma_factor,samples_after_opt,total_fB,out_dir)
+
+#print statistics to diagnose problems
+print_stats(pm_opt,out_dir)
 
 print("Total fB (Stochastic) = ",
     total_fB)
 
-print("Expected Value of fB_s = ", np.mean(fB_s_data))
+print("Expected Value of fB_s = ", mean_fB_s)
 
 if sigma_factor == 0.0:
     print("Total fB (Deterministic) = ",

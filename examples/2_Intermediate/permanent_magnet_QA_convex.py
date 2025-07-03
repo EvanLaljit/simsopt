@@ -69,11 +69,11 @@ n = 40 #20
 
 #noise parameters
 mean = 0.0
-sigma_factor = 1
-samples_after_opt = 1e3
+sigma_factor = 1e-2
+samples_after_opt = 1e4
 
 #algorithm parameters
-max_iter = 50  # Number of iterations to take in a convex step
+max_iter = 200  # Number of iterations to take in a convex step
 max_iter_RS = 1  # Number of iterations to take in a relax-and-split step
 reg_l0 = 0.0  # L0 regularization parameter
 reg_l1 = 0.0  # L1 regularization parameter
@@ -166,53 +166,6 @@ total_RS_history = np.ravel(np.array(total_RS_history))
 
 print('Done optimizing the permanent magnet object')
 
-#plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
-sigma = pm_opt.m_maxima * sigma_factor 
-fB_s_data = []
-for i in range(int(samples_after_opt)):
-    e_s = np.random.normal(loc=mean,scale=sigma[:,None],size=(pm_opt.ndipoles,3))
-    e_s = e_s.reshape(pm_opt.ndipoles*3)
-    fB_s_data.append(0.5 * np.sum((pm_opt.A_obj@(pm_opt.m+e_s)-pm_opt.b_obj)**2))
-    if i % int(samples_after_opt/10) == 0:
-        print("Sample", i, "mean[fB_s] = ", np.mean(fB_s_data))
-        
-#plot max_m, max_m/m, and (m/e_s), averaged over all samples
-m_to_perturb_ratio /= samples_after_opt    
-#plot fb_s data and label fB and E(fB_s)
-total_fB = 0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2)
-plt.figure(figsize=(10,10))
-plt.hist(fB_s_data, bins=50)
-plt.xlabel('fB_s')
-plt.ylabel('Count')
-plt.title(
-    "Histogram of fB\n"
-    "$fB = 0.5 |Am-b|^2 = {:.4e}$\n"
-    "$\\mathbb{{E}}[fB_s] = {:.4e}$".format(total_fB, np.mean(fB_s_data))
-)
-plt.tight_layout()
-plt.savefig(out_dir / "fB_s_deterministic_histogram.png")
-plt.close()
-#plot pm_opt.m_maxima
-plt.figure()
-plt.hist(pm_opt.m_maxima,bins=50)
-plt.xlabel('m_max')
-plt.ylabel('Count')
-plt.title('Histogram of m_max')
-plt.tight_layout()
-plt.savefig(out_dir / "m_max_histogram.png")
-plt.close()
-#plot m/m_max
-plt.figure()
-m = pm_opt.m.reshape(pm_opt.ndipoles, 3)
-m_mag = np.sqrt((np.sum(m ** 2, axis=1)))
-plt.figure()
-plt.hist(m_mag/pm_opt.m_maxima,bins=50)
-plt.xlabel('m/m_max')
-plt.ylabel('Count')
-plt.title('Histogram of m/m_max')
-plt.savefig(out_dir/ "m_over_m_max_histogram.png")
-plt.close()
-
 # Try to make a mp4 movie of the optimization progress
 try:
     make_optimization_plots(total_RS_history, total_m_history, total_mproxy_history, pm_opt, out_dir)
@@ -261,18 +214,20 @@ make_Bnormal_plots(b_dipole, s_plot, out_dir, "only_m_optimized")
 pointData = {"B_N": Bnormal_total[:, :, None]}
 s_plot.to_vtk(out_dir / "m_optimized", extra_data=pointData)
 
-# Print optimized f_B and other metrics
-ratio = m_mag / pm_opt.m_maxima
-print("m/m_maxima statistics:")
-print("Min:", np.min(ratio))
-print("Max:", np.max(ratio))
-print("Median:", np.median(ratio))
-print("Mean:", np.mean(ratio))
-print("Std:", np.std(ratio))
+# Print optimized f_B, perturbed fB and other metrics------------------------------------------------------
+
+#plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
+#and save the mean fB_s
+total_fB = 0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2)
+mean_fB_s = perturb_magnet(pm_opt,mean,sigma_factor,samples_after_opt,total_fB,out_dir)
+
+#print statistics to diagnose problems
+print_stats(pm_opt,out_dir)
 
 print("Total fB (Deterministic)= ",
       total_fB)
-print("Expected Value of fB_s = ", np.mean(fB_s_data))
+
+print("Expected Value of fB_s = ", mean_fB_s)
 
 f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
 print('f_B = ', f_B_sf)

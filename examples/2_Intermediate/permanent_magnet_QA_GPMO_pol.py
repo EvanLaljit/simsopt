@@ -1,31 +1,44 @@
-#!/usr/bin/env  
+#!/usr/bin/env python
 r"""
-This example script uses the GPMO
-greedy algorithm for solving permanent 
-magnet optimization on the MUSE grid. This 
-algorithm is described in the following paper:
+This simple example script allows the user to explore building
+permanent magnet configurations for the Landreman/Paul QA design with
+basic cylindrical brick magnets.
+
+For realistic designs, please see the script files at
+https://github.com/akaptano/simsopt_permanent_magnet_advanced_scripts.git
+which can generate all of the results in the recent relax-and-split
+and GPMO permanent magnet optimization papers:
+    
     A. A. Kaptanoglu, R. Conlin, and M. Landreman, 
     Greedy permanent magnet optimization, 
     Nuclear Fusion 63, 036016 (2023)
+    
+    A. A. Kaptanoglu, T. Qian, F. Wechsung, and M. Landreman. 
+    Permanent-Magnet Optimization for Stellarators as Sparse Regression.
+    Physical Review Applied 18, no. 4 (2022): 044006.
+
+This example uses the relax-and-split algorithm for 
+high-dimensional sparse regression. See the other examples 
+for using the greedy GPMO algorithm to solve the problem.
 
 The script should be run as:
-    mpirun -n 1 python permanent_magnet_MUSE.py
+    mpirun -n 1 python permanent_magnet_QA.py
 on a cluster machine but 
-    python permanent_magnet_MUSE.py
+    python permanent_magnet_QA.py
 is sufficient on other machines. Note that this code does not use MPI, but is 
 parallelized via OpenMP and XSIMD, so will run substantially
 faster on multi-core machines (make sure that all the cores
 are available to OpenMP, e.g. through setting OMP_NUM_THREADS).
 
-For high-resolution and more realistic designs, please see the script files at
-https://github.com/akaptano/simsopt_permanent_magnet_advanced_scripts.git
+CONVEX ONLY, L0=L1=L2=0
 """
 
 import time
 from pathlib import Path
 
 import numpy as np
-from matplotlib import pyplot as plt
+
+import matplotlib.pyplot as plt
 
 from simsopt.field import BiotSavart, DipoleField
 from simsopt.geo import PermanentMagnetGrid, SurfaceRZFourier
@@ -34,22 +47,25 @@ from simsopt.solve import GPMO
 from simsopt.util import FocusData, discretize_polarizations, polarization_axes, in_github_actions
 from simsopt.util.permanent_magnet_helper_functions import *
 
+
 t_start = time.time()
 
 # Set some parameters -- if doing CI, lower the resolution
 if in_github_actions:
-    nphi = 2
+    nphi = 64  # nphi = ntheta >= 64 needed for accurate full-resolution runs
+    ntheta = nphi
+    dr = 0.05  # cylindrical bricks with radial extent 5 cm
     nIter_max = 100
     nBacktracking = 50
     max_nMagnets = 20
-    downsample = 100  # downsample the FAMUS grid of magnets by this factor
 else:
-    nphi = 64  # >= 64 for high-resolution runs
-    nIter_max = 30000
+    nphi = 64  # nphi = ntheta >= 64 needed for accurate full-resolution runs
+    ntheta = 64
+    dr = 0.02  # cylindrical bricks with radial extent 2 cm
+    nIter_max = 24000
     nBacktracking = 200
-    max_nMagnets = 30000
-    downsample = 2
-
+    max_nMagnets = 24000
+    
 #Poincare plot parameters
 tol = 1e-10
 nfieldlines = 30 #30
@@ -59,30 +75,32 @@ n = 40 #20
 
 #noise parameters
 mean = 0.0
-sigma_factor = 1
+sigma_factor = 1e-2
 samples_after_opt = 1e3
 
 algorithm = 'baseline'  # Algorithm to use
 
-ntheta = nphi  # same as above
-dr = 0.01  # Radial extent in meters of the cylindrical permanent magnet bricks
-input_name = 'input.muse'
+coff = 0.1  # PM grid starts offset ~ 10 cm from the plasma surface
+poff = 0.05  # PM grid end offset ~ 15 cm from the plasma surface
+input_name = 'input.LandremanPaul2021_QA_lowres'
 
-# Read in the plasma equilibrium file
+# Read in the plas/ma equilibrium file
 TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolve()
-famus_filename = TEST_DIR / 'zot80.focus'
 surface_filename = TEST_DIR / input_name
-s = SurfaceRZFourier.from_focus(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
-s_inner = SurfaceRZFourier.from_focus(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
-s_outer = SurfaceRZFourier.from_focus(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+s = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+s_inner = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+s_outer = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
 
-# Make the output directory -- warning, saved data can get big!
-# On NERSC, recommended to change this directory to point to SCRATCH!
-out_dir = Path("output_permanent_magnet_GPMO_MUSE")
+# Make the inner and outer surfaces by extending the plasma surface
+s_inner.extend_via_projected_normal(poff)
+s_outer.extend_via_projected_normal(poff + coff)
+
+# Make the output directory
+out_dir = Path("output_permanent_magnet_GPMO_QA_pol")
 out_dir.mkdir(parents=True, exist_ok=True)
 
 # initialize the coils
-base_curves, curves, coils = initialize_coils('muse_famus', TEST_DIR, s, out_dir)
+base_curves, curves, coils = initialize_coils('qa', TEST_DIR, s, out_dir)
 
 # Set up BiotSavart fields
 bs = BiotSavart(coils)
@@ -94,7 +112,7 @@ calculate_modB_on_major_radius(bs, s)
 qphi = 2 * nphi
 quadpoints_phi = np.linspace(0, 1, qphi, endpoint=True)
 quadpoints_theta = np.linspace(0, 1, ntheta, endpoint=True)
-s_plot = SurfaceRZFourier.from_focus(
+s_plot = SurfaceRZFourier.from_vmec_input(
     surface_filename,
     quadpoints_phi=quadpoints_phi,
     quadpoints_theta=quadpoints_theta
@@ -103,54 +121,62 @@ s_plot = SurfaceRZFourier.from_focus(
 # Plot initial Bnormal on plasma surface from un-optimized BiotSavart coils
 make_Bnormal_plots(bs, s_plot, out_dir, "biot_savart_initial")
 
+# optimize the currents in the TF coils
+bs = coil_optimization(s, bs, base_curves, curves, out_dir)
+bs.set_points(s.gamma().reshape((-1, 3)))
+Bnormal = np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)
+
+# check after-optimization average on-axis magnetic field strength
+calculate_modB_on_major_radius(bs, s)
+
 # Set up correct Bnormal from TF coils
 bs.set_points(s.gamma().reshape((-1, 3)))
 Bnormal = np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)
 
-# Load a downsampled version of the magnet grid from a FAMUS file
-mag_data = FocusData(famus_filename, downsample=downsample)
+# Step 1: Setup temporary permanent magnet grid
+# This is a temporary grid that will be used to determine the dipole locations
+kwargs_temp = {"dr": dr}
+pm_opt_temp = PermanentMagnetGrid.geo_setup_between_toroidal_surfaces(
+    s, Bnormal, s_inner, s_outer, **kwargs_temp
+)
+dipole_locations = pm_opt_temp.dipole_grid_xyz
+nMagnets = pm_opt_temp.ndipoles
 
-# Set the allowable orientations of the magnets to be face-aligned
-# i.e. the local x, y, or z directions
+# Step 2: Define and Combine Orientation Types (Exact MUSE Logic)
 pol_axes = np.zeros((0, 3))
 pol_type = np.zeros(0, dtype=int)
+
+# Get 'face' orientations
 pol_axes_f, pol_type_f = polarization_axes(['face'])
-ntype_f = int(len(pol_type_f)/2)
-pol_axes_f = pol_axes_f[:ntype_f, :]
+ntype_f = int(len(pol_type_f) / 2) # ntype_f will be 3
+pol_axes_f = pol_axes_f[:ntype_f, :] # Keep only the positive [1,0,0], [0,1,0], [0,0,1]
 pol_type_f = pol_type_f[:ntype_f]
 pol_axes = np.concatenate((pol_axes, pol_axes_f), axis=0)
 pol_type = np.concatenate((pol_type, pol_type_f))
+# Now, pol_axes contains only the 3 positive face-aligned directions.
 
-# Optionally add additional types of allowed orientations
-PM4Stell_orientations = False
-if PM4Stell_orientations:
-    pol_axes_fe_ftri, pol_type_fe_ftri = polarization_axes(['fe_ftri'])
-    ntype_fe_ftri = int(len(pol_type_fe_ftri)/2)
-    pol_axes_fe_ftri = pol_axes_fe_ftri[:ntype_fe_ftri, :]
-    pol_type_fe_ftri = pol_type_fe_ftri[:ntype_fe_ftri] + 1
-    pol_axes = np.concatenate((pol_axes, pol_axes_fe_ftri), axis=0)
-    pol_type = np.concatenate((pol_type, pol_type_fe_ftri))
-    pol_axes_fc_ftri, pol_type_fc_ftri = polarization_axes(['fc_ftri'])
-    ntype_fc_ftri = int(len(pol_type_fc_ftri)/2)
-    pol_axes_fc_ftri = pol_axes_fc_ftri[:ntype_fc_ftri, :]
-    pol_type_fc_ftri = pol_type_fc_ftri[:ntype_fc_ftri] + 2
-    pol_axes = np.concatenate((pol_axes, pol_axes_fc_ftri), axis=0)
-    pol_type = np.concatenate((pol_type, pol_type_fc_ftri))
+# Step 3: Calculate Orientation Angle for Each Magnet
+orientation_phi = np.arctan2(dipole_locations[:, 1], dipole_locations[:, 0])
 
-ophi = np.arctan2(mag_data.oy, mag_data.ox)
-discretize_polarizations(mag_data, ophi, pol_axes, pol_type)
-pol_vectors = np.zeros((mag_data.nMagnets, len(pol_type), 3))
-pol_vectors[:, :, 0] = mag_data.pol_x
-pol_vectors[:, :, 1] = mag_data.pol_y
-pol_vectors[:, :, 2] = mag_data.pol_z
-print('pol_vectors_shape = ', pol_vectors.shape)
+# Step 4: Apply the Rotation Logic
+rhat_x = np.cos(orientation_phi)
+rhat_y = np.sin(orientation_phi)
+phat_x = -np.sin(orientation_phi)
+phat_y = np.cos(orientation_phi)
 
-# pol_vectors is only used for the greedy algorithms with cartesian coordinate_flag
-# which is the default, so no need to specify it here.
-kwargs = {"pol_vectors": pol_vectors, "downsample": downsample, "dr": dr}
+pol_vectors = np.zeros((nMagnets, len(pol_type), 3)) # Shape is now (nMagnets, 3, 3)
 
+for i in range(len(pol_type)):
+    pol_r, pol_p, pol_z = pol_axes[i, 0], pol_axes[i, 1], pol_axes[i, 2]
+    pol_vectors[:, i, 0] = pol_r * rhat_x + pol_p * phat_x
+    pol_vectors[:, i, 1] = pol_r * rhat_y + pol_p * phat_y
+    pol_vectors[:, i, 2] = pol_z
+    
 # Finally, initialize the permanent magnet class
-pm_opt = PermanentMagnetGrid.geo_setup_from_famus(s, Bnormal, famus_filename, **kwargs)
+kwargs_geo = {"dr": dr, "pol_vectors" : pol_vectors}
+pm_opt = PermanentMagnetGrid.geo_setup_between_toroidal_surfaces(
+    s, Bnormal, s_inner, s_outer, **kwargs_geo
+)
 
 print('Number of available dipoles = ', pm_opt.ndipoles)
 
@@ -196,7 +222,7 @@ pm_opt.m = np.ravel(m_history[:, :, min_ind])
 B_max = 1.465
 mu0 = 4 * np.pi * 1e-7
 M_max = B_max / mu0
-dipoles = pm_opt.m.reshape(pm_opt.ndipoles, 3)
+dipoles = pm_opt.m_proxy.reshape(pm_opt.ndipoles, 3)
 print('Volume of permanent magnets is = ', np.sum(np.sqrt(np.sum(dipoles ** 2, axis=-1))) / M_max)
 print('sum(|m_i|)', np.sum(np.sqrt(np.sum(dipoles ** 2, axis=-1))))
 
@@ -241,15 +267,15 @@ if save_plots:
     # write solution to FAMUS-type file
     pm_opt.write_to_famus(out_dir)
 
+
 # Compute metrics with permanent magnet results
 dipoles_m = pm_opt.m.reshape(pm_opt.ndipoles, 3)
 num_nonzero = np.count_nonzero(np.sum(dipoles_m ** 2, axis=-1)) / pm_opt.ndipoles * 100
 print("Number of possible dipoles = ", pm_opt.ndipoles)
 print("% of dipoles that are nonzero = ", num_nonzero)
 
-# Print optimized f_B, perturbed fB and other metrics------------------------------------------
-### Note this will only agree with the optimization in the high-resolution
-### limit where nphi ~ ntheta >= 64!
+
+# Print optimized f_B, perturbed fB and other metrics------------------------------------------------------
 
 #plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
 #and save the mean fB_s
@@ -259,8 +285,8 @@ mean_fB_s = perturb_magnet(pm_opt,mean,sigma_factor,samples_after_opt,total_fB,o
 #print statistics to diagnose problems
 print_stats(pm_opt,out_dir)
 
-print("Total fB (Deterministic) = ",
-    total_fB)
+print("Total fB (Deterministic)= ",
+      total_fB)
 
 print("Expected Value of fB_s = ", mean_fB_s)
 
@@ -288,14 +314,22 @@ if vmec_flag:
     from simsopt.util.mpi import MpiPartition
     mpi = MpiPartition(ngroups=1)
 
-    # Make the QFM surfaces
+    # Make the QFM surface
     t1 = time.time()
     Bfield = bs + b_dipole
     Bfield.set_points(s_plot.gamma().reshape((-1, 3)))
+    Bfield_proxy.set_points(s_plot.gamma().reshape((-1, 3)))
     qfm_surf = make_qfm(s_plot, Bfield)
     qfm_surf = qfm_surf.surface
+
+    # repeat QFM calculation for the proxy solution
+    Bfield_proxy = bs + b_dipole_proxy
+    qfm_surf_proxy = make_qfm(s, Bfield_proxy)
+    qfm_surf_proxy = qfm_surf_proxy.surface
+    qfm_surf_proxy.plot()
+    qfm_surf_proxy = qfm_surf
     t2 = time.time()
-    print("Making the QFM surface took ", t2 - t1, " s")
+    print("Making the two QFM surfaces took ", t2 - t1, " s")
 
     # Run VMEC with new QFM surface
     t1 = time.time()
@@ -306,9 +340,14 @@ if vmec_flag:
     equil.boundary = qfm_surf
     equil.run()
 
+    ### Always use the QH VMEC file for the proxy solution and just change the boundary
+    vmec_input = "../../tests/test_files/input.LandremanPaul2021_QH_reactorScale_lowres"
+    equil = Vmec(vmec_input, mpi)
+    equil.boundary = qfm_surf_proxy
+    equil.run()
 
-#------------------------------------------------
 
+#-------------------------------------
 
 t_end = time.time()
 print('Total time = ', t_end - t_start)
