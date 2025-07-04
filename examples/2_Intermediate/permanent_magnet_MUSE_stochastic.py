@@ -61,7 +61,7 @@ n = 40 #20
 mean = 0.0
 sigma_factor = 1
 S = 1000
-samples_after_opt = 1e3 
+samples_after_opt = 1e4
 
 algorithm = 'baseline'  # Algorithm to use
 
@@ -261,6 +261,17 @@ num_nonzero = np.count_nonzero(np.sum(dipoles_m ** 2, axis=-1)) / pm_opt.ndipole
 print("Number of possible dipoles = ", pm_opt.ndipoles)
 print("% of dipoles that are nonzero = ", num_nonzero)
 
+b_dipole = DipoleField(
+    pm_opt.dipole_grid_xyz,
+    pm_opt.m,
+    nfp=s.nfp,
+    coordinate_flag=pm_opt.coordinate_flag,
+    m_maxima=pm_opt.m_maxima,
+)
+b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
+bs.set_points(s_plot.gamma().reshape((-1, 3)))
+Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)
+
 # Print optimized f_B, perturbed fB and other metrics------------------------------------------
 ### Note this will only agree with the optimization in the high-resolution
 ### limit where nphi ~ ntheta >= 64!
@@ -268,7 +279,7 @@ print("% of dipoles that are nonzero = ", num_nonzero)
 #plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
 #and save the mean fB_s
 total_fB = (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1))
-mean_fB_s = perturb_magnet(pm_opt,mean,sigma_factor,samples_after_opt,total_fB,out_dir)
+mean_fB_s = perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,total_fB,out_dir)
 
 #print statistics to diagnose problems
 print_stats(pm_opt,out_dir)
@@ -282,16 +293,7 @@ if sigma_factor == 0.0:
     print("Total fB (Deterministic) = ",
         np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2) / 2.0)
 
-b_dipole = DipoleField(
-    pm_opt.dipole_grid_xyz,
-    pm_opt.m,
-    nfp=s.nfp,
-    coordinate_flag=pm_opt.coordinate_flag,
-    m_maxima=pm_opt.m_maxima,
-)
-b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
-bs.set_points(s_plot.gamma().reshape((-1, 3)))
-Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)
+
 f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
 print('f_B = ', f_B_sf)
 total_volume = np.sum(np.sqrt(np.sum(pm_opt.m.reshape(pm_opt.ndipoles, 3) ** 2, axis=-1))) * s.nfp * 2 * mu0 / B_max

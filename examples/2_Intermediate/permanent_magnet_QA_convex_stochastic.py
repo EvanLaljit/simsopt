@@ -71,12 +71,12 @@ n = 40 #20
 
 #noise parameters
 mean = 0.0
-sigma_factor = 0
+sigma_factor = 1e-2
 S = 1000
 samples_after_opt = 1e3
 
 #algorithm parameters
-max_iter = 20  # Number of iterations to take in a convex step
+max_iter = 200  # Number of iterations to take in a convex step
 max_iter_RS = 1  # Number of iterations to take in a relax-and-split step
 reg_l0 = 0.0  # L0 regularization parameter
 reg_l1 = 0.0  # L1 regularization parameter
@@ -235,7 +235,7 @@ s_plot.to_vtk(out_dir / "m_optimized", extra_data=pointData)
 #plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
 #and save the mean fB_s
 total_fB = (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1))
-mean_fB_s = perturb_magnet(pm_opt,mean,sigma_factor,samples_after_opt,total_fB,out_dir)
+mean_fB_s = perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,total_fB,out_dir)
 
 #print statistics to diagnose problems
 print_stats(pm_opt,out_dir)

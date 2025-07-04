@@ -200,7 +200,7 @@ s_plot.to_vtk(out_dir / "m_optimized", extra_data=pointData)
 #plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
 #and save the mean fB_s
 total_fB = 0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2)
-mean_fB_s = perturb_magnet(pm_opt,mean,sigma_factor,samples_after_opt,total_fB,out_dir)
+mean_fB_s = perturb_magnet(pm_opt,mean,s,s_plot,Bnormal,sigma_factor,samples_after_opt,total_fB,out_dir)
 
 #print statistics to diagnose problems
 print_stats(pm_opt,out_dir)
