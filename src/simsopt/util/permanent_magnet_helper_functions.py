@@ -54,22 +54,22 @@ def perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,t
         e_s = e_s.reshape(pm_opt.ndipoles*3)
         # Calculate the perturbed objective function value
         fB_s_data.append(0.5 * np.sum((pm_opt.A_obj@(pm_opt.m+e_s)-pm_opt.b_obj)**2))
-        # Calculate the perturbed squared flux
-        # b_dipole = DipoleField(
-        #     pm_opt.dipole_grid_xyz,
-        #     pm_opt.m + e_s,
-        #     nfp=s.nfp,
-        #     coordinate_flag=pm_opt.coordinate_flag,
-        #     m_maxima=pm_opt.m_maxima
-        # )
-        # b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
-        # f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
-        # fb_sf_s_data.append(f_B_sf)
-        # # Show progress
-        # if i % int(samples_after_opt/10) == 0:
-        #     print("Sample", i, ":")
-        #     print("mean[fB_s] = ", np.mean(fB_s_data))
-        #     print("mean[fB_sf_s] = ", np.mean(fb_sf_s_data))
+        Calculate the perturbed squared flux
+        b_dipole = DipoleField(
+            pm_opt.dipole_grid_xyz,
+            pm_opt.m + e_s,
+            nfp=s.nfp,
+            coordinate_flag=pm_opt.coordinate_flag,
+            m_maxima=pm_opt.m_maxima
+        )
+        b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
+        f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
+        fb_sf_s_data.append(f_B_sf)
+        # Show progress
+        if i % int(samples_after_opt/10) == 0:
+            print("Sample", i, ":")
+            print("mean[fB_s] = ", np.mean(fB_s_data))
+            print("mean[fB_sf_s] = ", np.mean(fb_sf_s_data))
     #add fb_squared flux and b-dot-n
     print("Perturbation complete, plotting results...") 
     
