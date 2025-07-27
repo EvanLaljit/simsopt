@@ -7,7 +7,7 @@ __all__ = ['read_focus_coils', 'coil_optimization',
            'initialize_coils', 'calculate_modB_on_major_radius',
            'make_optimization_plots', 'run_Poincare_plots',
            'make_Bnormal_plots', 'initialize_default_kwargs', 
-           'perturb_magnet', 'print_stats'
+           'perturb_magnet', 'perturb_magnet_max','print_stats'
            ]
 
 import numpy as np
@@ -16,15 +16,62 @@ import matplotlib.animation as animation
 from scipy.optimize import minimize
 from pathlib import Path
 
+def perturb_magnet_max(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_for_e_max,out_dir):
+
+    from simsopt.field import BiotSavart, DipoleField
+    from simsopt.geo import PermanentMagnetGrid, SurfaceRZFourier
+    from simsopt.objectives import SquaredFlux
+    """
+    Perturb the magnet by adding the max noise to the dipole moments, then
+    caculate perturbed objective function and squares flux values.
+
+    Args:
+        pm-opt: PermanentMagnetGrid class object that was optimized.
+        s_plot: plasma boundary surface with range = 'full torus'.
+        Bnormal: Normal component of the magnetic field on the plasma surface.
+        mean: Mean value for the Gaussian noise.
+        sigma_factor: Factor to scale the standard deviation of the noise by m_max.
+        samples_for_e_max: Number of samples to generate for the perturbation.
+        out_dir: Path or string for the output directory for saved files.
 
 
-def perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,total_fB,out_dir,stochastic=False):
+    Returns:
+        fB_perturbed: Perturbed objective function value.
+        f_B_sf_perturbed: Perturbed squared flux value.
+     
+    """
+    
+    sigma = pm_opt.m_maxima * sigma_factor
+    
+    print(f"Perturbing magnet with maximum perturbation, with sigma_factor = {sigma_factor} and samples = {samples_for_e_max:.4e}")
+    E = np.random.normal(loc=mean, scale=sigma[None,:,None], size=(samples_for_e_max, pm_opt.ndipoles,3)) # S samples of noise vectors
+    E = E.reshape(samples_for_e_max, pm_opt.ndipoles*3) # Reshape to (S, ndipoles*3) for easier matrix multiplication
+    E_mags = np.linalg.norm(E,axis=1)  # Magnitudes of the noise vectors
+    E_max = E[np.argmax(E_mags)]
+    fB_perturbed = 0.5 * np.sum((pm_opt.A_obj @ (pm_opt.m + E_max) - pm_opt.b_obj) ** 2)
+    
+    #Calculate the perturbed squared flux
+    b_dipole = DipoleField(
+        pm_opt.dipole_grid_xyz,
+        pm_opt.m + E_max,
+        nfp=s.nfp,
+        coordinate_flag=pm_opt.coordinate_flag,
+        m_maxima=pm_opt.m_maxima
+    )
+    b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
+    f_B_sf_perturbed = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
+    print("Perturbation complete, printing results...") 
+    
+    return fB_perturbed, f_B_sf_perturbed
+
+
+def perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,out_dir):
     from simsopt.field import BiotSavart, DipoleField
     from simsopt.geo import PermanentMagnetGrid, SurfaceRZFourier
     from simsopt.objectives import SquaredFlux
     """
     Perturb the magnet by adding noise to the dipole moments, then
-    caculate perturbed objective function, fb_s, and plot the results.
+    caculate perturbed objective function and squares flux values, and plot the results.
 
     Args:
         pm-opt: PermanentMagnetGrid class object that was optimized.
@@ -33,14 +80,13 @@ def perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,t
         mean: Mean value for the Gaussian noise.
         sigma_factor: Factor to scale the standard deviation of the noise by m_max.
         samples_after_opt: Number of samples to generate for the perturbation.
-        total_fB: Total objective function value before perturbation. 
-            Used for comparison in plot.
         out_dir: Path or string for the output directory for saved files.
-        stochastic: Boolean flag to indicate if the optimization used to generate pm_opt.m is stochastic or deterministic.
 
     Returns:
-        mean(fB_s_data): Mean value of the perturbed objective function values.
         saves plot of the histogram of fB_s data.
+        mean(fB_s_data): Mean value of the perturbed objective function values.
+        mean(fB_sf_s_data): Mean value of the perturbed squared flux values.
+        
     """
     
     sigma = pm_opt.m_maxima * sigma_factor
@@ -54,7 +100,7 @@ def perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,t
         e_s = e_s.reshape(pm_opt.ndipoles*3)
         # Calculate the perturbed objective function value
         fB_s_data.append(0.5 * np.sum((pm_opt.A_obj@(pm_opt.m+e_s)-pm_opt.b_obj)**2))
-        Calculate the perturbed squared flux
+        #Calculate the perturbed squared flux
         b_dipole = DipoleField(
             pm_opt.dipole_grid_xyz,
             pm_opt.m + e_s,
@@ -78,28 +124,16 @@ def perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,t
     plt.hist(fB_s_data, bins=50)
     plt.xlabel('fB_s')
     plt.ylabel('Count')
-    if stochastic:
-        plt.title(
-        "Histogram of fB (GPMO)\n"
-        "$fB = \\frac{{1}}{{S}} \\sum_{{s=1}}^S 0.5 |A(m+e_s)-b|^2 = {:.4e}$\n"
-        "$\\mathbb{{E}}[fB_s] = {:.4e}$".format(total_fB, np.mean(fB_s_data))
-        )
-        plt.tight_layout()
-        plt.savefig(out_dir / "fB_s_histogram_stochastic.png")
-        plt.close()
-        print("stochastic----------------------")
-    else:
-        plt.title(
-            "Histogram of fB_s (GPMO)\n"
-            "$fB_s = 0.5 |Am-b|^2 = {:.4e}$\n"
-            "$\\mathbb{{E}}[fB_s] = {:.4e}$".format(total_fB, np.mean(fB_s_data))
-        )
-        plt.tight_layout()
-        plt.savefig(out_dir / "fB_s_histogram_deterministic.png")
-        plt.close()
-        print("deterministic-----------------------")
-    print("Expected value of Squared Flux = ", np.mean(fb_sf_s_data))
-    return np.mean(fB_s_data)
+    plt.title(
+        "Histogram of fB_s \n"
+        "$fB_s = 0.5 ||Am-b||^2 = {:.4e}$\n"
+        "$\\mathbb{{E}}[fB_s] = {:.4e}$".format(0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2), 
+                                                np.mean(fB_s_data))
+    )
+    plt.tight_layout()
+    plt.savefig(out_dir / "fB_s_histogram.png")
+    plt.close()
+    return np.mean(fB_s_data), np.mean(fb_sf_s_data)
 
 
 def print_stats(pm_opt,out_dir):
@@ -143,15 +177,15 @@ def print_stats(pm_opt,out_dir):
     # print("Median:", np.median(ratio))
     # print("Mean:", np.mean(ratio))
     # print("Std:", np.std(ratio))
-    # #save m
-    # np.save(out_dir / "m.npy", pm_opt.m)
+    #save m
+    np.save(out_dir / "m.npy", pm_opt.m)
     # # Find the number of magnets with a magnitude of EXACTLY zero
     # num_exact_zeros = np.sum(m_mag == 0.0)
     # num_nonzero = np.sum(m_mag > 0.0)
     # print("Total number of magnets:", len(m_mag))
     # print("Total number of non-zero magnets:", num_nonzero)
     # print("Number of zero magnets:", num_exact_zeros)
- 
+
     return 0
     
     

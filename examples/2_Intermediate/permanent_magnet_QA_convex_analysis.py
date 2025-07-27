@@ -27,8 +27,8 @@ else:
 
 algo = 'GPMO'
 
-m_deterministic_file = 'output_permanent_magnet_GPMO_QA/m.npy'
-m_stochastic_file = 'output_permanent_magnet_GPMO_QA_stochastic/m.npy'
+m_deterministic_file = 'output_permanent_magnet_QA_convex/m.npy'
+m_stochastic_file = 'output_permanent_magnet_QA_convex_stochastic/m.npy'
 
 coff = 0.1  # PM grid starts offset ~ 10 cm from the plasma surface
 poff = 0.05  # PM grid end offset ~ 15 cm from the plasma surface

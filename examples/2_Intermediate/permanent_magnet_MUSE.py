@@ -45,9 +45,9 @@ if in_github_actions:
     downsample = 100  # downsample the FAMUS grid of magnets by this factor
 else:
     nphi = 64  # >= 64 for high-resolution runs
-    nIter_max = 25000
+    nIter_max = 28000
     nBacktracking = 200
-    max_nMagnets = 25000
+    max_nMagnets = 28000
     downsample = 2
 
 #Poincare plot parameters
@@ -59,7 +59,7 @@ n = 40 #20
 
 #noise parameters
 mean = 0.0
-sigma_factor = 1e-1
+sigma_factor = 1
 samples_after_opt = 1e3
 
 algorithm = 'baseline'  # Algorithm to use
@@ -264,20 +264,23 @@ Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2
 
 #plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
 #and save the mean fB_s
-total_fB = 0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2)
-mean_fB_s = perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,total_fB,out_dir)
+mean_fB_s, mean_fB_sf_s = perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,out_dir)
+S=10000
+fB_s_max_perturbed, fB_sf_max_perturbed =  perturb_magnet_max(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,S,out_dir)
 
 #print statistics to diagnose problems
 print_stats(pm_opt,out_dir)
 
-print("Total fB (Deterministic) = ",
-    total_fB)
-
-print("Expected Value of fB_s = ", mean_fB_s)
-
+print("||Am-b||^2 = ",
+    0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2))
+print(f"Expected Value of fB_s {mean_fB_s}")
+print(f"||A(m+e_max)-b||^2 = {fB_s_max_perturbed}")
 
 f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
 print('f_B = ', f_B_sf)
+print(f"Expected Value of Squared Flux = {mean_fB_sf_s}")
+print(f"f_B_sf_max_perturbed = {fB_sf_max_perturbed}")
+
 total_volume = np.sum(np.sqrt(np.sum(pm_opt.m.reshape(pm_opt.ndipoles, 3) ** 2, axis=-1))) * s.nfp * 2 * mu0 / B_max
 print('Total volume = ', total_volume)
 

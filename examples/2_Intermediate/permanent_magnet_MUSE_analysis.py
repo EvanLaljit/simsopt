@@ -23,8 +23,8 @@ else:
     nphi = 64  # >= 64 for high-resolution runs
     downsample = 2
 
-m_deterministic_file = 'output_permanent_magnet_RS_MUSE/m.npy'
-m_stochastic_file = 'output_permanent_magnet_RS_MUSE_stochastic/m.npy'
+m_deterministic_file = 'output_permanent_magnet_GPMO_MUSE/m.npy'
+m_stochastic_file = 'output_permanent_magnet_GPMO_MUSE_stochastic/m.npy'
 
 ntheta = nphi  # same as above
 dr = 0.01  # Radial extent in meters of the cylindrical permanent magnet bricks

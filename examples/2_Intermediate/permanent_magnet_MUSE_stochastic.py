@@ -45,9 +45,9 @@ if in_github_actions:
     downsample = 100  # downsample the FAMUS grid of magnets by this factor
 else:
     nphi = 64  # >= 64 for high-resolution runs
-    nIter_max = 30000
+    nIter_max = 28000
     nBacktracking = 200
-    max_nMagnets = 30000
+    max_nMagnets = 28000
     downsample = 2
     
 #Poincare plot parameters
@@ -60,8 +60,8 @@ n = 40 #20
 #noise parameters
 mean = 0.0
 sigma_factor = 1
-S = 1000
-samples_after_opt = 1e4
+S = 10000
+samples_after_opt = 1e3
 
 algorithm = 'baseline'  # Algorithm to use
 
@@ -162,11 +162,26 @@ sigma = pm_opt.m_maxima * sigma_factor  # scale the noise by the maximum magnet 
 # new obj func is Expected_Value[(A@(m+e)-b)^2] ~ 1/S * sum (A@(m+e_s)-b)^2 
 # for S samples of e ~ N(mean, sigma^2)
 # where e is a random vector added to m --> m' = m + e
+percent = 0.6
+b_vec_option = 'max' # Options for b_vec: default, target_random, target_scaled, max
 
-E = np.random.normal(loc=mean, scale=sigma[None,:,None], size=(S, pm_opt.ndipoles,3)) 
-E = E.reshape(S, pm_opt.ndipoles*3)
-# e_sum = np.sum(E, axis=0); sum e_s over S samples
-c = pm_opt.A_obj@np.sum(E, axis=0) - S*pm_opt.b_obj
+E = np.random.normal(loc=mean, scale=sigma[None,:,None], size=(S, pm_opt.ndipoles,3)) # S samples of noise vectors
+E = E.reshape(S, pm_opt.ndipoles*3) # Reshape to (S, ndipoles*3) for easier matrix multiplication
+E_mags = np.linalg.norm(E,axis=1)  # Magnitudes of the noise vectors
+E_max = E[np.argmax(E_mags)]
+# Calculate the b_obj vector for the optimization
+if b_vec_option == 'default':
+    c = (pm_opt.A_obj@np.sum(E, axis=0) - S*pm_opt.b_obj)
+    b_vec = c/S
+elif b_vec_option == 'target_random':
+    E_target = E[np.argmin(np.abs(E_mags - percent * np.max(E_mags)))]  # Target noise vector at a given percent of the max noise
+    b_vec = pm_opt.A_obj@E_target - pm_opt.b_obj
+    print(f"Ratio of target noise to max noise = {np.linalg.norm(E_target) / np.linalg.norm(E_max)}")
+elif b_vec_option == 'target_scaled':
+    E_target_scaled = percent * E_max # Scaled target noise vector
+    b_vec = pm_opt.A_obj@E_target_scaled - pm_opt.b_obj
+elif b_vec_option == 'max':
+    b_vec = pm_opt.A_obj@E_max - pm_opt.b_obj
 
 # Set some hyperparameters for the optimization
 algorithm = algorithm  # Algorithm to use
@@ -186,7 +201,7 @@ if algorithm == 'backtracking' or algorithm == 'ArbVec_backtracking':
 
 # Optimize the permanent magnets greedily
 t1 = time.time()
-R2_history, Bn_history, m_history = GPMO_stochastic(pm_opt, -c/S, algorithm, **kwargs)
+R2_history, Bn_history, m_history = GPMO_stochastic(pm_opt, -(b_vec), algorithm, **kwargs)
 t2 = time.time()
 print('GPMO took t = ', t2 - t1, ' s')
 print(len(pm_opt.m))
@@ -278,24 +293,26 @@ Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2
 
 #plot fB_s = 0.5 |A(m+e_s)-b|^2, perturbing after optimization to check for robustness
 #and save the mean fB_s
-total_fB = (0.5/S)*np.sum(np.sum(((pm_opt.m[None,:]+E)@(pm_opt.A_obj).T-pm_opt.b_obj)**2,axis=1))
-mean_fB_s = perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,total_fB,out_dir)
+mean_fB_s, mean_fB_sf_s = perturb_magnet(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,samples_after_opt,out_dir)
+fB_s_max_perturbed, fB_sf_max_perturbed =  perturb_magnet_max(pm_opt,s,s_plot,Bnormal,mean,sigma_factor,S,out_dir)
 
 #print statistics to diagnose problems
 print_stats(pm_opt,out_dir)
 
-print("Total fB (Stochastic) = ",
-    total_fB)
-
-print("Expected Value of fB_s = ", mean_fB_s)
-
-if sigma_factor == 0.0:
-    print("Total fB (Deterministic) = ",
-        np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2) / 2.0)
-
+print("||Am-b||^2 = ",
+    0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2))
+print(f"Expected Value of fB_s {mean_fB_s}")
+print(f"||A(m+e_max)-b||^2 = {fB_s_max_perturbed}")
 
 f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
 print('f_B = ', f_B_sf)
+print(f"Expected Value of Squared Flux = {mean_fB_sf_s}")
+print(f"f_B_sf_max_perturbed = {fB_sf_max_perturbed}")
+
+if sigma_factor == 0:
+    print("Total fB (Deterministic) = ",
+        np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2) / 2.0)
+    
 total_volume = np.sum(np.sqrt(np.sum(pm_opt.m.reshape(pm_opt.ndipoles, 3) ** 2, axis=-1))) * s.nfp * 2 * mu0 / B_max
 print('Total volume = ', total_volume)
 
