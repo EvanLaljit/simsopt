@@ -70,3 +70,5 @@ tests/boundary*
 # Version file
 src/simsopt/_version.py
 
+examples/examples/**/output_permanent_magnet_GPMO_MUSE/*.vtu
+examples/examples/**/output/*.vtu
