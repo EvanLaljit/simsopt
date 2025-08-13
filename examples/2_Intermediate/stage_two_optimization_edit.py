@@ -85,9 +85,9 @@ ARCLENGTH_WEIGHT=1e-2
 MAXITER = 50 if in_github_actions else 1000
 
 #added for init pert compare
-num_of_pert_inits = 8
+num_of_pert_inits = 2 #WHEN THIS IS 1, THEN JF.X ONLY HAS 4 CURVES
 N_OOS = 500
-SIGMA = 3e-3
+SIGMA = 1
 SIGMA_OOS = 1e-2
 L = 0.5
 seed = 0
@@ -123,6 +123,7 @@ sampler = GaussianSampler(control_curves[0].quadpoints, SIGMA, L, n_derivs=1)
 ### Build perturbed initial guesses to use for curves to optimize ###
 pert_init_guesses = []
 pert_coil_init_guesses = []
+base_curves_pert = []
 for i in range(num_of_pert_inits):
     # Create initial basic coils
     base_curves = create_equally_spaced_curves(ncoils, s.nfp, stellsym=True, R0=R0, R1=R1, order=order)
@@ -133,7 +134,7 @@ for i in range(num_of_pert_inits):
     coils_pert = [Coil(CurvePerturbed(c.curve, PerturbationSample(sampler, randomgen=rg)), c.current) for c in coils]
     pert_init_guesses.append([c.curve for c in coils_pert])
     pert_coil_init_guesses.append(coils_pert)
-
+    base_curves_pert.append(base_curves_perturbed)
 
 for j in range(num_of_pert_inits):
     
@@ -141,13 +142,12 @@ for j in range(num_of_pert_inits):
     # coils = coils_via_symmetries(base_curves, base_currents, s.nfp, True)
     bs = BiotSavart(coils)
     bs.set_points(s.gamma().reshape((-1, 3)))
-
+        
     curves = [c.curve for c in coils]
     curves_to_vtk(curves, OUT_DIR + f"curves_init_{j}")
     pointData = {"B_N": np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)[:, :, None]}
     s.to_vtk(OUT_DIR + "surf_init", extra_data=pointData)
-
-
+    
     # Define the individual terms objective function:
     Jf = SquaredFlux(s, bs)
     Jls = [CurveLength(c) for c in base_curves]
@@ -168,6 +168,7 @@ for j in range(num_of_pert_inits):
         + ARCLENGTH_WEIGHT * sum(Jals)\
         + CURVATURE_WEIGHT * sum(Jcs) \
         + MSC_WEIGHT * sum(QuadraticPenalty(J, MSC_THRESHOLD, "max") for J in Jmscs)
+        
 
     # We don't have a general interface in SIMSOPT for optimisation problems that
     # are not in least-squares form, so we write a little wrapper function that we
@@ -191,6 +192,7 @@ for j in range(num_of_pert_inits):
         return J, grad
 
 
+
     print("""
     ################################################################################
     ### Perform a Taylor test ######################################################
@@ -200,12 +202,20 @@ for j in range(num_of_pert_inits):
     dofs = JF.x
     np.random.seed(1)
     h = np.random.uniform(size=dofs.shape)
+    
+
     J0, dJ0 = f(dofs)
+
     dJh = sum(dJ0 * h)
+    for i in range(ncoils):
+        print(np.array_equal(base_curves[i].x, base_curves_pert[j][i].x))
+    
+    
     for eps in [1e-3, 1e-4, 1e-5, 1e-6, 1e-7]:
         J1, _ = f(dofs + eps*h)
         J2, _ = f(dofs - eps*h)
         print("err", (J1-J2)/(2*eps) - dJh)
+        
 
     print("""
     ################################################################################
@@ -235,8 +245,9 @@ for j in range(num_of_pert_inits):
 
     print(JF.dof_names)
     print(JF.x)
-    
+
     exit()
+        
     # After creating JF, add this debugging code:
     print("=== COMPARING FOURIER COEFFICIENTS ===")
     print(f"JF.x shape: {JF.x.shape}")
@@ -248,13 +259,14 @@ for j in range(num_of_pert_inits):
 
     # Calculate DOFs per curve
     dofs_per_curve = 3 * (2 * order + 1)  # 33 DOFs per curve
-
+    
+    base_curves = base_curves_pert[j]
     print("\n=== FOURIER COEFFICIENTS COMPARISON ===")
     for i in range(ncoils):
         print(f"\n--- Base Curve {i} ---")
         
         # Get Fourier coefficients from JF.x for this curve
-        start_idx = i * dofs_per_curve
+        start_idx = i * dofs_per_curve + 4*dofs_per_curve
         end_idx = start_idx + dofs_per_curve
         jf_curve_coeffs = fourier_coeffs_from_jf[start_idx:end_idx]
         
@@ -278,7 +290,7 @@ for j in range(num_of_pert_inits):
             print(f"  Max difference: {np.max(diff):.2e}")
             print(f"  Mean difference: {np.mean(diff):.2e}")
            
-    
+    exit()
     res = minimize(fun, dofs, jac=True, method='L-BFGS-B', options={'maxiter': MAXITER, 'maxcor': 300}, tol=1e-15)
 
     pointData = {"B_N": np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)[:, :, None]}

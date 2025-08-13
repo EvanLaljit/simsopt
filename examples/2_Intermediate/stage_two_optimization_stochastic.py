@@ -74,7 +74,7 @@ ARCLENGTH_WEIGHT = 1e-2
 SIGMA = 1e-2
 
 # Length scale for the coil errors
-L = 0.5
+L = 0.15
 
 # Number of samples to approximate the mean
 N_SAMPLES = 100
@@ -84,16 +84,20 @@ CURRENT_BASE = 1e5
 SIGMA_COIL = 1e-2 * CURRENT_BASE
 
 # Out-of-sample evaluation parameters
-N_OOS = 400
+N_OOS = 1000
 N_OOS_SIGMA = SIGMA
 
 # Initial guess perturbation parameters
-N_INITIAL_GUESS_PERTURBATIONS = 14
-SIGMA_INITIAL_GUESS = 1e-2 # Standard deviation for the initial guess perturbation
-L_INITIAL_GUESS = 0.2 # Length scale for the initial guess perturbation
+N_INITIAL_GUESS_PERTURBATIONS = 8
+SIGMA_INITIAL_GUESS = 6e-2 # Standard deviation for the initial guess perturbation
+L_INITIAL_GUESS = 0.5 # Length scale for the initial guess perturbation
 
 # Number of iterations to perform:
 MAXITER = 50 if in_github_actions else 1000
+
+# Write input parameters to file
+info_txt = f"L init guess: {L_INITIAL_GUESS}, L for perturbing optimized coils = {L}\n" \
+    + f"SIGMA init guess: {SIGMA_INITIAL_GUESS}, SIGMA for perturbing optimized coils = {SIGMA}" \
 
 # Seed for initial guess perturbation
 seed_initial_guess = 0
@@ -103,8 +107,12 @@ TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolv
 filename = TEST_DIR / 'input.LandremanPaul2021_QA'
 
 # Directory for output
-OUT_DIR = "./output_stage_two_optimization_stochastic/"
-os.makedirs(OUT_DIR, exist_ok=True)
+OUT_DIR = Path("output_stage_two_optimization_stochastic/")
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+# Create the subdirectory
+SUB_DIR = OUT_DIR / "Non-VTK_Data"
+SUB_DIR.mkdir(parents=True, exist_ok=True)
 
 # Initialize the boundary magnetic surface; errors break symmetries, so consider the full torus
 nphi = 64
@@ -126,6 +134,10 @@ s_plot = SurfaceRZFourier.from_vmec_input(
 # End of input parameters.
 #######################################################
 
+#write input parameters to file
+with open(SUB_DIR / 'input_parameters.txt', 'w') as f:
+            f.write(info_txt)
+            
 #define figure for kde plot
 fig, ax = plt.subplots(figsize=(10,10))
 #for loop over initial guess perturbation
@@ -137,7 +149,7 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
     
     # Create the initial coils:
     base_curves = create_equally_spaced_curves(ncoils, s.nfp, stellsym=True, R0=R0, R1=R1, order=order)
-    curves_to_vtk(base_curves, OUT_DIR + f"base_curves_init")
+    curves_to_vtk(base_curves, OUT_DIR / f"base_curves_init")
     
     # np.random.seed(seed_initial_guess)
     # for c in base_curves:
@@ -148,7 +160,7 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
     base_curves = [CurvePerturbed(c, PerturbationSample(sampler_initial_guess, randomgen=rg_initial_guess)) for c in base_curves]
     
     # show initial base coil after perturbation
-    curves_to_vtk(base_curves, OUT_DIR + f"base_curves_init_perturbed_{j}")
+    curves_to_vtk(base_curves, OUT_DIR / f"base_curves_init_perturbed_{j}")
         
     base_currents = [Current(CURRENT_BASE) for i in range(ncoils)]
     # Since the target field is zero, one possible solution is just to set all
@@ -161,11 +173,11 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
 
     curves = [c.curve for c in coils]
     currents = [c.current for c in coils]
-    curves_to_vtk(curves, OUT_DIR + f"curves_init_{j}")
+    curves_to_vtk(curves, OUT_DIR / f"curves_init_{j}")
 
     bs.set_points(s_plot.gamma().reshape((-1, 3)))
     pointData = {"B_N": np.sum(bs.B().reshape((qphi, qtheta, 3)) * s_plot.unitnormal(), axis=2)[:, :, None]}
-    s_plot.to_vtk(OUT_DIR + f"surf_init_{j}", extra_data=pointData)
+    s_plot.to_vtk(OUT_DIR / f"surf_init_{j}", extra_data=pointData)
 
     bs.set_points(s.gamma().reshape((-1, 3)))
     # Define the individual terms objective function:
@@ -176,9 +188,9 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
     Jmscs = [MeanSquaredCurvature(c) for c in base_curves]
     Jals = [ArclengthVariation(c) for c in base_curves]
 
-    for c in base_currents:
-        print(f"-----------------Base current: {c.x}")
-        print(f"-----------------Perturbed current: {c.x + np.random.normal(scale=SIGMA_COIL)}")
+    # for c in base_currents:
+    #     print(f"-----------------Base current: {c.x}")
+    #     print(f"-----------------Perturbed current: {c.x + np.random.normal(scale=SIGMA_COIL)}")
     
     seed = 0
     rg = Generator(PCG64DXSM(seed))
@@ -211,13 +223,12 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
         curves_pert.append([c.curve for c in coils_pert])
         bs_pert = BiotSavart(coils_pert)
         Jfs.append(SquaredFlux(s, bs_pert))
-    
-    curves_to_vtk(curves_pert[80], OUT_DIR + f"curves_pert_n_sample")
+        
+    for k in range(len(curves_pert)):
+        if k < 15:
+            curves_to_vtk(curves_pert[k], OUT_DIR / f"curves_pert_n_sample_{k}")
     
     Jmpi = MPIObjective(Jfs, comm_world, needs_splitting=True)
-
-    # for i in range(len(curves_pert)):
-    #     curves_to_vtk(curves_pert[i], OUT_DIR + f"curves_init_{i}")
 
     # Form the total objective function. To do this, we can exploit the
     # fact that Optimizable objects with J() and dJ() functions can be
@@ -303,13 +314,12 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
     #     print(f"-----------------Base currents: {c.x}")
     # print(JF.dof_names)   
     
-    curves_to_vtk(curves, OUT_DIR + f"curves_opt_{j}")
-    curves_to_vtk(base_curves, OUT_DIR + f"base_curves_opt_{j}")
-    # for i in range(len(curves_pert)):
-    #     curves_to_vtk(curves_pert[i], OUT_DIR + f"curves_opt_{i}")
+    curves_to_vtk(curves, OUT_DIR / f"curves_opt_{j}")
+    curves_to_vtk(base_curves, OUT_DIR / f"base_curves_opt_{j}")
+
     bs.set_points(s_plot.gamma().reshape((-1, 3)))
     pointData = {"B_N": np.sum(bs.B().reshape((qphi, qtheta, 3)) * s_plot.unitnormal(), axis=2)[:, :, None]}
-    s_plot.to_vtk(OUT_DIR + f"surf_opt_{j}", extra_data=pointData)
+    s_plot.to_vtk(OUT_DIR / f"surf_opt_{j}", extra_data=pointData)
     bs.set_points(s.gamma().reshape((-1, 3)))
     Jf.x = res.x
     proc0_print(f"Mean Flux Objective across perturbed coils: {Jmpi.J():.3e}")
@@ -320,6 +330,7 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
     sampler = GaussianSampler(curves[0].quadpoints, N_OOS_SIGMA, L, n_derivs=1)
     b_dot_n_pert = np.zeros((qphi, qtheta)) 
     squared_flux_data = []
+    curves_pert_oos = []
     for i in range(N_OOS):
         # first add the 'systematic' error. this error is applied to the base curves and hence the various symmetries are applied to it.
         base_curves_perturbed = [CurvePerturbed(c, PerturbationSample(sampler, randomgen=rg)) for c in base_curves]
@@ -329,16 +340,22 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
         curves_pert.append([c.curve for c in coils_pert])
         bs_pert = BiotSavart(coils_pert)
         squared_flux_data.append(SquaredFlux(s, bs_pert).J())
-        
+        if j==0 and i<15: 
+            curves_pert_oos.append([c.curve for c in coils_pert])
+            curves_to_vtk(curves_pert_oos[i], OUT_DIR / f"curves_pert_oos_{j}_sample_{i}")
+        if i % (N_OOS/10) == 0:
+            print(f"Finished {i+1}/{N_OOS} Out-of-Sample Evaluations")
+            
     proc0_print(f"Out-of-sample flux value                  : {np.mean(squared_flux_data):.3e}")
     proc0_print(f"Objective Gradient (||∇J||)              : {np.linalg.norm(JF.dJ()):.3e}")
     
     sns.kdeplot(squared_flux_data,fill=False,ax=ax, label=f'Initial Guess {j+1}')
-    np.save(OUT_DIR + f"stochastic_perturbed_sq_flux_data_{j}",squared_flux_data)
+    np.save(OUT_DIR / f"stochastic_perturbed_sq_flux_data_{j}",squared_flux_data)
     sq_flux_values.append(Jf.J())
     mean_perturbed_sq_flux_values.append(np.mean(squared_flux_data))
     gradients.append(np.linalg.norm(JF.dJ()))
     print(f"Finished {(j+1)}/{N_INITIAL_GUESS_PERTURBATIONS} Initial Guess Perturbations")
+    
     time.sleep(5)
     
     
@@ -348,13 +365,13 @@ plt.xlabel("Squared Flux")
 plt.ylabel("Count")
 plt.title(f"Distribution of Squared Flux Values for {N_INITIAL_GUESS_PERTURBATIONS} Initial"
           " Guess Perturbations")
-plt.savefig(OUT_DIR + "squared_flux_distribution.png")
+plt.savefig(SUB_DIR / "squared_flux_distribution.png")
 plt.close()
 
 # Save unperturbed and mean perturbed values
 header_string = 'Jf.J(), <Perturbed Jf.J()>, ||∇J||'
 combined_array = np.column_stack((np.array(sq_flux_values),np.array(mean_perturbed_sq_flux_values),np.array(gradients)))
-np.savetxt(OUT_DIR + 'J_Values.txt', 
+np.savetxt(SUB_DIR / 'J_Values.txt', 
            combined_array, delimiter=',', header = header_string, comments='')
 
 end = time.time()

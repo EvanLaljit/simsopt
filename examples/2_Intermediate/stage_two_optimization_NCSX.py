@@ -48,36 +48,36 @@ import matplotlib.pyplot as plt
 start_time = time.time()
 # Number of unique coil shapes, i.e. the number of coils per half field period:
 # (Since the configuration has nfp = 2, multiply by 4 to get the total number of coils.)
-ncoils = 4
+ncoils = 3
 
 # Major radius for the initial circular coils:
-R0 = 1.0
+R0 = 1.3
 
 # Minor radius for the initial circular coils:
-R1 = 0.5
+R1 = 0.8
 
 # Number of Fourier modes describing each Cartesian component of each coil:
-order = 24
+order = 5
 
 # Weight on the curve lengths in the objective function. We use the `Weight`
 # class here to later easily adjust the scalar value and rerun the optimization
 # without having to rebuild the objective.
-LENGTH_WEIGHT_INPUT = 1e-7
+LENGTH_WEIGHT = 8e-4
 
 # Threshold and weight for the coil-to-coil distance penalty in the objective function:
-CC_THRESHOLD = 0.1
-CC_WEIGHT = 10
+CC_THRESHOLD = 0.2
+CC_WEIGHT = 100
  
 # Threshold and weight for the coil-to-surface distance penalty in the objective function:
-CS_THRESHOLD = 0.3
-CS_WEIGHT = 0
+CS_THRESHOLD = 1
+CS_WEIGHT = 1e-2
 
 # Threshold and weight for the curvature penalty in the objective function:
-CURVATURE_THRESHOLD = 5.
+CURVATURE_THRESHOLD = 5
 CURVATURE_WEIGHT = 1e-6
 
 # Threshold and weight for the mean squared curvature penalty in the objective function:
-MSC_THRESHOLD = 5
+MSC_THRESHOLD = 5.
 MSC_WEIGHT = 1e-6
 
 # Weight for the arclength variation penalty in the objective function:
@@ -87,15 +87,15 @@ ARCLENGTH_WEIGHT = 1e-2
 SIGMA = 1e-2
 
 # Length scale for the coil errors
-L = 0.15
+L = 0.5
 
 # Number of samples for out-of-sample evaluation
 N_OOS = 1000
 
 # Number of times to perturb initial guess and run optimization for each
 N_INITIAL_GUESS_PERTURBATIONS = 8
-SIGMA_INITIAL_GUESS = 6e-2 # Standard deviation for the initial guess perturbation
-L_INITIAL_GUESS = 0.5 # Length scale for the initial guess perturbation
+SIGMA_INITIAL_GUESS = 1e-2 # Standard deviation for the initial guess perturbation
+L_INITIAL_GUESS = 0.2 # Length scale for the initial guess perturbation
 
 # Number of iterations to perform:
 MAXITER = 50 if in_github_actions else 1000
@@ -109,13 +109,10 @@ seed_initial_guess = 0
 
 # File for the desired boundary magnetic surface:
 TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolve()
-# filename = TEST_DIR / 'input.NCSX_c09r00_halfTeslaTF'
-filename = TEST_DIR / 'input.LandremanPaul2021_QA'
-# bn_file = TEST_DIR / 'input.NCSX_c09r00_halfTeslaTF_Bn'
+filename = TEST_DIR / 'input.NCSX_c09r00_halfTeslaTF'
 
 # Directory for output
-
-OUT_DIR = Path("output_stage_two_optimization")
+OUT_DIR = Path("output_stage_two_optimization_NCSX")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Create the subdirectory
@@ -125,14 +122,14 @@ SUB_DIR.mkdir(parents=True, exist_ok=True)
 # Initialize the boundary magnetic surface:
 nphi = 64
 ntheta = 16
-s = SurfaceRZFourier.from_vmec_input(filename, 
+s = SurfaceRZFourier.from_focus(filename, 
                                      range="full torus", nphi=nphi, ntheta=ntheta)
 
 qphi = 2 * nphi
 qtheta = 64
 quadpoints_phi = np.linspace(0, 1, qphi, endpoint=True)
 quadpoints_theta = np.linspace(0, 1, qtheta, endpoint=True)
-s_plot = SurfaceRZFourier.from_vmec_input(
+s_plot = SurfaceRZFourier.from_focus(
     filename,
     range="full torus",
     quadpoints_phi=quadpoints_phi,
@@ -155,15 +152,15 @@ mean_perturbed_sq_flux_values = []
 gradients = []
 for j in range(N_INITIAL_GUESS_PERTURBATIONS):
     
-    LENGTH_WEIGHT = Weight(LENGTH_WEIGHT_INPUT)
+    # LENGTH_WEIGHT = Weight(LENGTH_WEIGHT_INPUT)
     seed_initial_guess += 1
     
     # Create the initial coils:
+    #initial coils for comparison, left unbothered
+    base_curves_init = create_equally_spaced_curves(ncoils, s.nfp, stellsym=True, R0=R0, R1=R1, order=order)
+    #create coils to perturb
     base_curves = create_equally_spaced_curves(ncoils, s.nfp, stellsym=True, R0=R0, R1=R1, order=order)
     curves_to_vtk(base_curves, OUT_DIR / f"base_curves_init")
-    
-
-    # np.random.seed(seed_initial_guess)
     
     # for i, c in enumerate(base_curves):
         
@@ -189,17 +186,20 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
     #     v = v / mode_numbers_squared
     #     c.x += v.flatten()
 
-    # np.random.seed(seed_initial_guess)
-    # for c in base_curves:
-    #     c.x += np.random.normal(scale=SIGMA_INITIAL_GUESS, size=c.x.shape)
+    for i, c in enumerate(base_curves):
+        np.random.seed(seed_initial_guess + i)
+        c.x += np.random.normal(scale=SIGMA_INITIAL_GUESS, size=c.x.shape)
         
-    rg_initial_guess = Generator(PCG64DXSM(seed_initial_guess))
-    sampler_initial_guess = GaussianSampler(base_curves[0].quadpoints, SIGMA_INITIAL_GUESS, L_INITIAL_GUESS, n_derivs=2)
-    base_curves = [CurvePerturbed(c, PerturbationSample(sampler_initial_guess, randomgen=rg_initial_guess)) for c in base_curves]
+    # rg_initial_guess = Generator(PCG64DXSM(seed_initial_guess))
+    # sampler_initial_guess = GaussianSampler(base_curves[0].quadpoints, SIGMA_INITIAL_GUESS, L_INITIAL_GUESS, n_derivs=2)
+    # base_curves = [CurvePerturbed(c, PerturbationSample(sampler_initial_guess, randomgen=rg_initial_guess)) for c in base_curves]
+    
+    print("---Checking Perturbed Curves (Base_curves) against Initial Base Curves")
+    for i in range(ncoils):
+        print(f"Coils Match: {np.array_equal(base_curves[i].x,base_curves_init[i].x)}" )
     
     # show initial base coil after perturbation
     curves_to_vtk(base_curves, OUT_DIR / f"base_curves_init_perturbed_{j}")
-    
     
     base_currents = [Current(1e5) for i in range(ncoils)]
     # Since the target field is zero, one possible solution is just to set all
@@ -230,14 +230,24 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
     # Form the total objective function. To do this, we can exploit the
     # fact that Optimizable objects with J() and dJ() functions can be
     # multiplied by scalars and added:
-    # + CS_WEIGHT * Jcsdist \
+    
     JF = Jf \
         + LENGTH_WEIGHT * sum(Jls) \
         + CC_WEIGHT * Jccdist \
         + CURVATURE_WEIGHT * sum(Jcs) \
         + MSC_WEIGHT * sum(QuadraticPenalty(J, MSC_THRESHOLD, "max") for J in Jmscs) \
         + ARCLENGTH_WEIGHT * sum(Jals) \
+        + CS_WEIGHT * Jcsdist \
+            
+    print("---Checking JF.x against Initial Base Curves")
+    JFx = JF.x[(ncoils-1):]
+    JFx = np.reshape(JFx, (ncoils,-1))
+    for i in range(ncoils):
+        print(f"Coils Match: {np.array_equal(JFx[i],base_curves_init[i].x)}" )
         
+
+    exit()
+    
     # We don't have a general interface in SIMSOPT for optimisation problems that
     # are not in least-squares form, so we write a little wrapper function that we
     # pass directly to scipy.optimize.minimize
@@ -260,7 +270,7 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
         outstr += f", C-C-Sep={Jccdist.shortest_distance():.2f}"
         outstr += f", ║∇J║={np.linalg.norm(grad):.1e}"
         outstr += f"\n-----On {(j+1)}/{N_INITIAL_GUESS_PERTURBATIONS} Initial Guess Perturbations"
-        # print(outstr)
+        print(outstr)
         return J, grad
 
     # Perturb initial guess
