@@ -57,7 +57,7 @@ R0 = 1.3
 R1 = 0.8
 
 # Number of Fourier modes describing each Cartesian component of each coil:
-order = 5
+order = 24
 
 # Weight on the curve lengths in the objective function. We use the `Weight`
 # class here to later easily adjust the scalar value and rerun the optimization
@@ -69,8 +69,8 @@ CC_THRESHOLD = 0.2
 CC_WEIGHT = 100
  
 # Threshold and weight for the coil-to-surface distance penalty in the objective function:
-CS_THRESHOLD = 1
-CS_WEIGHT = 1e-2
+CS_THRESHOLD = 0.2
+CS_WEIGHT = 0
 
 # Threshold and weight for the curvature penalty in the objective function:
 CURVATURE_THRESHOLD = 5
@@ -93,7 +93,7 @@ L = 0.5
 N_OOS = 1000
 
 # Number of times to perturb initial guess and run optimization for each
-N_INITIAL_GUESS_PERTURBATIONS = 8
+N_INITIAL_GUESS_PERTURBATIONS = 20
 SIGMA_INITIAL_GUESS = 1e-2 # Standard deviation for the initial guess perturbation
 L_INITIAL_GUESS = 0.2 # Length scale for the initial guess perturbation
 
@@ -186,20 +186,45 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
     #     v = v / mode_numbers_squared
     #     c.x += v.flatten()
 
-    for i, c in enumerate(base_curves):
-        np.random.seed(seed_initial_guess + i)
-        c.x += np.random.normal(scale=SIGMA_INITIAL_GUESS, size=c.x.shape)
+    # for i, c in enumerate(base_curves):
+    #     np.random.seed(seed_initial_guess + i)
+    #     c.x += np.random.normal(scale=SIGMA_INITIAL_GUESS, size=c.x.shape)
         
-    # rg_initial_guess = Generator(PCG64DXSM(seed_initial_guess))
-    # sampler_initial_guess = GaussianSampler(base_curves[0].quadpoints, SIGMA_INITIAL_GUESS, L_INITIAL_GUESS, n_derivs=2)
-    # base_curves = [CurvePerturbed(c, PerturbationSample(sampler_initial_guess, randomgen=rg_initial_guess)) for c in base_curves]
-    
-    print("---Checking Perturbed Curves (Base_curves) against Initial Base Curves")
-    for i in range(ncoils):
-        print(f"Coils Match: {np.array_equal(base_curves[i].x,base_curves_init[i].x)}" )
+    rg_initial_guess = Generator(PCG64DXSM(seed_initial_guess))
+    sampler_initial_guess = GaussianSampler(base_curves[0].quadpoints, SIGMA_INITIAL_GUESS, L_INITIAL_GUESS, n_derivs=2)
+    base_curves_pert = [CurvePerturbed(c, PerturbationSample(sampler_initial_guess, randomgen=rg_initial_guess)) for c in base_curves]
     
     # show initial base coil after perturbation
-    curves_to_vtk(base_curves, OUT_DIR / f"base_curves_init_perturbed_{j}")
+    curves_to_vtk(base_curves_pert, OUT_DIR / f"base_curves_init_perturbed_{j}")
+    
+    #take x,y,z coordinates from perturbed coil and fit fourier
+    base_curves_fit = create_equally_spaced_curves(ncoils, s.nfp, stellsym=True, R0=R0, R1=R1, order=order)
+    theta = np.linspace(0,2*np.pi,361)
+    
+    for c in range(ncoils):
+        
+        #for each coordinate, find coefficients
+        coeffs_for_all_coords = []
+        for coordinate in range(3):
+            
+            x = base_curves_pert[c].gamma()[:,coordinate]
+            x = np.append(x,x[0]) #enforce periodicity for lstsq solver
+            
+            basis = []
+            for m in range(order+1):
+                basis.append(np.cos(m*theta))
+                if m > 0:
+                    basis.append(np.sin(m*theta))
+            A = np.column_stack(basis)
+            coeffs, _, _, _ = np.linalg.lstsq(A, x, rcond=None)
+            coeffs_for_all_coords = np.append(coeffs_for_all_coords,coeffs)
+        base_curves_fit[c].x = coeffs_for_all_coords
+        
+        print(len(base_curves_fit[c].x))
+        print(len(base_curves_init[c].x))
+    curves_to_vtk(base_curves_fit, OUT_DIR / f"base_curves_init_fit{j}")
+    
+    base_curves = base_curves_fit
     
     base_currents = [Current(1e5) for i in range(ncoils)]
     # Since the target field is zero, one possible solution is just to set all
@@ -211,7 +236,7 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
     bs = BiotSavart(coils)
 
     curves = [c.curve for c in coils]
-    curves_to_vtk(curves, OUT_DIR / f"curves_init_{j}") #need to fix this, init and init_perturbed are the same
+    curves_to_vtk(curves, OUT_DIR / f"curves_init_{j}") 
 
     bs.set_points(s_plot.gamma().reshape((-1, 3)))
     pointData = {"B_N": np.sum(bs.B().reshape((qphi, qtheta, 3)) * s_plot.unitnormal(), axis=2)[:, :, None]}
@@ -238,16 +263,7 @@ for j in range(N_INITIAL_GUESS_PERTURBATIONS):
         + MSC_WEIGHT * sum(QuadraticPenalty(J, MSC_THRESHOLD, "max") for J in Jmscs) \
         + ARCLENGTH_WEIGHT * sum(Jals) \
         + CS_WEIGHT * Jcsdist \
-            
-    print("---Checking JF.x against Initial Base Curves")
-    JFx = JF.x[(ncoils-1):]
-    JFx = np.reshape(JFx, (ncoils,-1))
-    for i in range(ncoils):
-        print(f"Coils Match: {np.array_equal(JFx[i],base_curves_init[i].x)}" )
         
-
-    exit()
-    
     # We don't have a general interface in SIMSOPT for optimisation problems that
     # are not in least-squares form, so we write a little wrapper function that we
     # pass directly to scipy.optimize.minimize
