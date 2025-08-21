@@ -1,0 +1,32 @@
+Running initial guess perturbation 0
+Coil 0: RMS error: 0.000005, Relative: 0.000003
+Max point error: 0.000023, Min point error: 0.000000
+Coil 1: RMS error: 0.000005, Relative: 0.000003
+Max point error: 0.000020, Min point error: 0.000000
+Coil 2: RMS error: 0.000003, Relative: 0.000002
+Max point error: 0.000019, Min point error: 0.000000
+Overall fit errors: [4.657344288156769e-06, 4.619406882923161e-06, 3.111039491314821e-06]
+Mean fit error: 0.000004
+
+################################################################################
+### Perform a Taylor test ######################################################
+################################################################################
+
+Iteration 1/2000-----
+J=2.0e-01, ⟨Jf⟩=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.9, 31.6, 7.8], ∫ϰ²/L>=[7.3, 10.6, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 2/2000-----
+J=2.1e-01, ⟨Jf⟩=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[20.1, 35.3, 9.9], ∫ϰ²/L>=[9.4, 15.0, 6.9], C-C-Sep=0.07, ║∇J║=7.9e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 3/2000-----
+J=2.0e-01, ⟨Jf⟩=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[23.4, 28.5, 8.8], ∫ϰ²/L>=[9.7, 13.1, 6.3], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+err -0.17569495843953398
+Iteration 4/2000-----
+J=2.0e-01, ⟨Jf⟩=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.7, 32.0, 7.7], ∫ϰ²/L>=[7.3, 10.7, 4.0], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 5/2000-----
+J=2.0e-01, ⟨Jf⟩=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[19.2, 31.3, 7.9], ∫ϰ²/L>=[7.3, 10.5, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+err -0.0018877471638860666
+slurmstepd: error: *** JOB 65237850 ON cl004 CANCELLED AT 2025-08-20T01:19:01 ***

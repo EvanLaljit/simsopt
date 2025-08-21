@@ -1,0 +1,9 @@
+Running initial guess perturbation 13
+Coil 0: RMS error: 0.000001, Relative: 0.000000
+Max point error: 0.000004, Min point error: 0.000000
+Coil 1: RMS error: 0.000000, Relative: 0.000000
+Max point error: 0.000002, Min point error: 0.000000
+Coil 2: RMS error: 0.000001, Relative: 0.000000
+Max point error: 0.000005, Min point error: 0.000000
+Overall fit errors: [5.459549210602524e-07, 3.385376308968683e-07, 7.095856690605911e-07]
+Mean fit error: 0.000001

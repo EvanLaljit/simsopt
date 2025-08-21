@@ -1,0 +1,39 @@
+Running initial guess perturbation 14
+Coil 0: RMS error: 0.000004, Relative: 0.000003
+Max point error: 0.000019, Min point error: 0.000000
+Coil 1: RMS error: 0.000004, Relative: 0.000002
+Max point error: 0.000025, Min point error: 0.000000
+Coil 2: RMS error: 0.000005, Relative: 0.000003
+Max point error: 0.000027, Min point error: 0.000000
+Overall fit errors: [4.209328704835876e-06, 4.467785918198664e-06, 4.7533747075870065e-06]
+Mean fit error: 0.000004
+
+################################################################################
+### Perform a Taylor test ######################################################
+################################################################################
+
+Iteration 1/2000-----
+J=5.5e-01, ⟨Jf⟩=4.5e-02, ⟨B·n⟩=5.2e-02, Len=sum([5.2, 5.8, 5.4])=16.3, ϰ=[10.1, 5.7, 6.5], ∫ϰ²/L>=[5.5, 3.8, 2.8], C-C-Sep=0.02, ║∇J║=1.2e+01
+-----On 15/20 Initial Guess Perturbations
+Iteration 2/2000-----
+J=5.6e-01, ⟨Jf⟩=4.5e-02, ⟨B·n⟩=5.2e-02, Len=sum([5.2, 5.8, 5.4])=16.4, ϰ=[11.1, 11.0, 8.8], ∫ϰ²/L>=[8.2, 5.8, 5.1], C-C-Sep=0.02, ║∇J║=1.3e+01
+-----On 15/20 Initial Guess Perturbations
+Iteration 3/2000-----
+J=5.5e-01, ⟨Jf⟩=4.5e-02, ⟨B·n⟩=5.2e-02, Len=sum([5.2, 5.8, 5.4])=16.4, ϰ=[13.2, 7.4, 6.9], ∫ϰ²/L>=[8.4, 5.4, 5.0], C-C-Sep=0.02, ║∇J║=1.2e+01
+-----On 15/20 Initial Guess Perturbations
+err -0.19328283199059015
+Iteration 4/2000-----
+J=5.5e-01, ⟨Jf⟩=4.5e-02, ⟨B·n⟩=5.2e-02, Len=sum([5.2, 5.8, 5.4])=16.3, ϰ=[9.8, 5.7, 6.5], ∫ϰ²/L>=[5.5, 3.8, 2.8], C-C-Sep=0.02, ║∇J║=1.2e+01
+-----On 15/20 Initial Guess Perturbations
+Iteration 5/2000-----
+J=5.5e-01, ⟨Jf⟩=4.5e-02, ⟨B·n⟩=5.2e-02, Len=sum([5.2, 5.8, 5.4])=16.3, ϰ=[10.4, 5.7, 6.5], ∫ϰ²/L>=[5.5, 3.8, 2.8], C-C-Sep=0.02, ║∇J║=1.2e+01
+-----On 15/20 Initial Guess Perturbations
+err -0.0020353246500812716
+Iteration 6/2000-----
+J=5.5e-01, ⟨Jf⟩=4.5e-02, ⟨B·n⟩=5.2e-02, Len=sum([5.2, 5.8, 5.4])=16.3, ϰ=[10.1, 5.7, 6.5], ∫ϰ²/L>=[5.5, 3.8, 2.8], C-C-Sep=0.02, ║∇J║=1.2e+01
+-----On 15/20 Initial Guess Perturbations
+Iteration 7/2000-----
+J=5.5e-01, ⟨Jf⟩=4.5e-02, ⟨B·n⟩=5.2e-02, Len=sum([5.2, 5.8, 5.4])=16.3, ϰ=[10.1, 5.7, 6.5], ∫ϰ²/L>=[5.5, 3.8, 2.8], C-C-Sep=0.02, ║∇J║=1.2e+01
+-----On 15/20 Initial Guess Perturbations
+err -1.9113129564374276e-05
+slurmstepd: error: *** JOB 65237864 ON cm039 CANCELLED AT 2025-08-20T01:19:01 ***

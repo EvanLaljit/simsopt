@@ -1,0 +1,700 @@
+Running initial guess perturbation 0
+Coil 0: RMS error: 0.000005, Relative: 0.000003
+Max point error: 0.000023, Min point error: 0.000000
+Coil 1: RMS error: 0.000005, Relative: 0.000003
+Max point error: 0.000020, Min point error: 0.000000
+Coil 2: RMS error: 0.000003, Relative: 0.000002
+Max point error: 0.000019, Min point error: 0.000000
+Overall fit errors: [4.657344288156769e-06, 4.619406882923161e-06, 3.111039491314821e-06]
+Mean fit error: 0.000004
+
+################################################################################
+### Perform a Taylor test ######################################################
+################################################################################
+
+Iteration 1/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.9, 31.6, 7.8], ∫ϰ²/L=[7.3, 10.6, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 2/1000-----
+J=2.1e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[20.1, 35.3, 9.9], ∫ϰ²/L=[9.4, 15.0, 6.9], C-C-Sep=0.07, ║∇J║=7.9e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 3/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[23.4, 28.5, 8.8], ∫ϰ²/L=[9.7, 13.1, 6.3], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+err -0.17569383976454045
+Iteration 4/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.7, 32.0, 7.7], ∫ϰ²/L=[7.3, 10.7, 4.0], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 5/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[19.2, 31.3, 7.9], ∫ϰ²/L=[7.3, 10.5, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+err -0.0018877360468407822
+Iteration 6/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.8, 31.7, 7.7], ∫ϰ²/L=[7.3, 10.6, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 7/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.9, 31.6, 7.8], ∫ϰ²/L=[7.3, 10.6, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+err -1.8817535918813633e-05
+Iteration 8/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.9, 31.6, 7.8], ∫ϰ²/L=[7.3, 10.6, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 9/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.9, 31.6, 7.8], ∫ϰ²/L=[7.3, 10.6, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+err -1.8782286859142516e-07
+Iteration 10/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.9, 31.6, 7.8], ∫ϰ²/L=[7.3, 10.6, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 11/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.9, 31.6, 7.8], ∫ϰ²/L=[7.3, 10.6, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+err -2.2074566619068037e-09
+
+################################################################################
+### Run the optimisation #######################################################
+################################################################################
+
+Iteration 1/1000-----
+J=2.0e-01, Jf=6.2e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.2])=15.8, ϰ=[18.9, 31.6, 7.8], ∫ϰ²/L=[7.3, 10.6, 3.9], C-C-Sep=0.07, ║∇J║=7.8e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 2/1000-----
+J=2.0e+01, Jf=2.1e-01, ⟨B·n⟩=8.8e-02, Len=sum([6.1, 11.0, 18.4])=35.6, ϰ=[502.8, 223.2, 648.9], ∫ϰ²/L=[336.5, 179.4, 245.5], C-C-Sep=0.02, ║∇J║=1.1e+02
+-----On 1/20 Initial Guess Perturbations
+Iteration 3/1000-----
+J=3.0e-01, Jf=6.0e-02, ⟨B·n⟩=6.0e-02, Len=sum([5.5, 5.3, 6.0])=16.8, ϰ=[21.8, 31.9, 64.2], ∫ϰ²/L=[10.8, 28.9, 34.3], C-C-Sep=0.07, ║∇J║=9.5e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 4/1000-----
+J=1.2e-01, Jf=6.1e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.3])=15.9, ϰ=[20.3, 32.5, 15.6], ∫ϰ²/L=[8.5, 16.0, 14.7], C-C-Sep=0.12, ║∇J║=3.3e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 5/1000-----
+J=1.0e-01, Jf=6.1e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.3])=15.9, ϰ=[21.9, 29.9, 24.3], ∫ϰ²/L=[9.8, 14.0, 13.8], C-C-Sep=0.16, ║∇J║=1.6e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 6/1000-----
+J=9.3e-02, Jf=6.1e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.3])=15.9, ϰ=[24.3, 28.6, 19.0], ∫ϰ²/L=[11.6, 13.5, 11.6], C-C-Sep=0.18, ║∇J║=9.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 7/1000-----
+J=8.7e-02, Jf=6.1e-02, ⟨B·n⟩=6.1e-02, Len=sum([5.5, 5.1, 5.3])=15.9, ϰ=[27.2, 26.9, 12.2], ∫ϰ²/L=[13.6, 13.8, 10.0], C-C-Sep=0.18, ║∇J║=7.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 8/1000-----
+J=8.2e-02, Jf=6.0e-02, ⟨B·n⟩=6.0e-02, Len=sum([5.6, 5.2, 5.3])=16.0, ϰ=[28.4, 21.7, 13.5], ∫ϰ²/L=[17.2, 13.8, 10.9], C-C-Sep=0.18, ║∇J║=1.0e+00
+-----On 1/20 Initial Guess Perturbations
+Iteration 9/1000-----
+J=7.9e-02, Jf=5.9e-02, ⟨B·n⟩=6.0e-02, Len=sum([5.6, 5.2, 5.3])=16.1, ϰ=[26.1, 19.3, 12.8], ∫ϰ²/L=[16.6, 13.0, 13.4], C-C-Sep=0.18, ║∇J║=5.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 10/1000-----
+J=7.8e-02, Jf=5.9e-02, ⟨B·n⟩=6.0e-02, Len=sum([5.6, 5.2, 5.3])=16.1, ϰ=[24.2, 17.5, 12.6], ∫ϰ²/L=[15.7, 12.6, 13.5], C-C-Sep=0.18, ║∇J║=4.4e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 11/1000-----
+J=7.4e-02, Jf=5.7e-02, ⟨B·n⟩=5.9e-02, Len=sum([5.6, 5.2, 5.3])=16.2, ϰ=[15.2, 13.5, 16.0], ∫ϰ²/L=[13.6, 13.2, 15.0], C-C-Sep=0.19, ║∇J║=3.5e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 12/1000-----
+J=7.2e-02, Jf=5.5e-02, ⟨B·n⟩=5.7e-02, Len=sum([5.7, 5.2, 5.3])=16.2, ϰ=[14.0, 10.9, 16.1], ∫ϰ²/L=[14.6, 14.1, 14.4], C-C-Sep=0.19, ║∇J║=5.8e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 13/1000-----
+J=6.9e-02, Jf=5.3e-02, ⟨B·n⟩=5.6e-02, Len=sum([5.7, 5.2, 5.3])=16.3, ϰ=[16.6, 12.7, 12.8], ∫ϰ²/L=[16.6, 16.4, 14.5], C-C-Sep=0.19, ║∇J║=4.0e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 14/1000-----
+J=6.7e-02, Jf=5.1e-02, ⟨B·n⟩=5.5e-02, Len=sum([5.7, 5.3, 5.3])=16.3, ϰ=[16.7, 14.3, 12.8], ∫ϰ²/L=[17.1, 19.1, 13.6], C-C-Sep=0.19, ║∇J║=3.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 15/1000-----
+J=6.4e-02, Jf=4.8e-02, ⟨B·n⟩=5.2e-02, Len=sum([5.8, 5.4, 5.3])=16.5, ϰ=[15.7, 13.8, 14.0], ∫ϰ²/L=[16.4, 23.1, 14.3], C-C-Sep=0.19, ║∇J║=4.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 16/1000-----
+J=6.2e-02, Jf=4.4e-02, ⟨B·n⟩=5.0e-02, Len=sum([5.9, 5.5, 5.3])=16.7, ϰ=[13.1, 14.7, 11.8], ∫ϰ²/L=[17.0, 29.4, 18.5], C-C-Sep=0.19, ║∇J║=5.5e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 17/1000-----
+J=5.9e-02, Jf=4.3e-02, ⟨B·n⟩=4.9e-02, Len=sum([5.9, 5.5, 5.3])=16.6, ϰ=[14.4, 13.0, 11.4], ∫ϰ²/L=[17.0, 27.2, 16.9], C-C-Sep=0.19, ║∇J║=3.4e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 18/1000-----
+J=5.7e-02, Jf=4.1e-02, ⟨B·n⟩=4.7e-02, Len=sum([5.9, 5.5, 5.3])=16.7, ϰ=[13.4, 15.0, 11.5], ∫ϰ²/L=[18.0, 27.3, 16.6], C-C-Sep=0.19, ║∇J║=3.2e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 19/1000-----
+J=5.5e-02, Jf=3.8e-02, ⟨B·n⟩=4.5e-02, Len=sum([6.0, 5.6, 5.3])=16.9, ϰ=[13.7, 18.7, 13.3], ∫ϰ²/L=[20.1, 31.7, 18.5], C-C-Sep=0.18, ║∇J║=4.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 20/1000-----
+J=5.3e-02, Jf=3.5e-02, ⟨B·n⟩=4.3e-02, Len=sum([6.1, 5.7, 5.3])=17.1, ϰ=[12.7, 23.6, 16.2], ∫ϰ²/L=[21.1, 34.5, 19.7], C-C-Sep=0.19, ║∇J║=4.2e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 21/1000-----
+J=5.0e-02, Jf=3.3e-02, ⟨B·n⟩=4.1e-02, Len=sum([6.1, 5.7, 5.3])=17.2, ϰ=[13.3, 19.1, 14.7], ∫ϰ²/L=[21.2, 31.4, 19.8], C-C-Sep=0.19, ║∇J║=3.7e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 22/1000-----
+J=4.8e-02, Jf=3.0e-02, ⟨B·n⟩=3.9e-02, Len=sum([6.3, 5.8, 5.3])=17.5, ϰ=[14.7, 18.0, 14.7], ∫ϰ²/L=[22.6, 32.1, 22.1], C-C-Sep=0.19, ║∇J║=5.1e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 23/1000-----
+J=4.6e-02, Jf=2.8e-02, ⟨B·n⟩=3.7e-02, Len=sum([6.4, 5.9, 5.3])=17.6, ϰ=[13.2, 17.3, 13.7], ∫ϰ²/L=[24.0, 37.5, 21.9], C-C-Sep=0.19, ║∇J║=4.8e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 24/1000-----
+J=4.4e-02, Jf=2.6e-02, ⟨B·n⟩=3.6e-02, Len=sum([6.5, 6.0, 5.4])=17.8, ϰ=[11.5, 17.3, 13.2], ∫ϰ²/L=[24.1, 36.3, 21.6], C-C-Sep=0.19, ║∇J║=3.4e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 25/1000-----
+J=4.2e-02, Jf=2.5e-02, ⟨B·n⟩=3.5e-02, Len=sum([6.5, 6.1, 5.4])=18.0, ϰ=[11.5, 16.6, 14.4], ∫ϰ²/L=[23.5, 33.1, 21.2], C-C-Sep=0.19, ║∇J║=3.0e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 26/1000-----
+J=4.1e-02, Jf=2.3e-02, ⟨B·n⟩=3.3e-02, Len=sum([6.7, 6.1, 5.4])=18.2, ϰ=[12.1, 16.3, 14.3], ∫ϰ²/L=[23.8, 31.4, 21.6], C-C-Sep=0.18, ║∇J║=4.5e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 27/1000-----
+J=4.0e-02, Jf=2.3e-02, ⟨B·n⟩=3.3e-02, Len=sum([6.6, 6.1, 5.4])=18.0, ϰ=[10.9, 18.2, 13.9], ∫ϰ²/L=[22.0, 28.7, 19.9], C-C-Sep=0.19, ║∇J║=4.4e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 28/1000-----
+J=3.9e-02, Jf=2.1e-02, ⟨B·n⟩=3.2e-02, Len=sum([6.8, 6.2, 5.4])=18.3, ϰ=[11.7, 14.9, 14.2], ∫ϰ²/L=[22.0, 28.8, 20.9], C-C-Sep=0.19, ║∇J║=4.7e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 29/1000-----
+J=3.8e-02, Jf=2.1e-02, ⟨B·n⟩=3.2e-02, Len=sum([6.8, 6.2, 5.4])=18.3, ϰ=[11.7, 13.8, 13.9], ∫ϰ²/L=[21.3, 27.7, 18.8], C-C-Sep=0.19, ║∇J║=2.4e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 30/1000-----
+J=3.7e-02, Jf=2.0e-02, ⟨B·n⟩=3.1e-02, Len=sum([6.9, 6.3, 5.4])=18.6, ϰ=[11.9, 12.9, 14.4], ∫ϰ²/L=[21.1, 27.7, 19.2], C-C-Sep=0.19, ║∇J║=2.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 31/1000-----
+J=3.6e-02, Jf=1.9e-02, ⟨B·n⟩=3.0e-02, Len=sum([7.0, 6.4, 5.4])=18.9, ϰ=[11.4, 13.0, 13.8], ∫ϰ²/L=[20.2, 27.6, 17.8], C-C-Sep=0.18, ║∇J║=3.5e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 32/1000-----
+J=3.5e-02, Jf=1.9e-02, ⟨B·n⟩=3.0e-02, Len=sum([7.1, 6.4, 5.4])=18.8, ϰ=[10.3, 13.3, 12.1], ∫ϰ²/L=[19.6, 26.9, 16.0], C-C-Sep=0.19, ║∇J║=2.2e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 33/1000-----
+J=3.4e-02, Jf=1.7e-02, ⟨B·n⟩=2.9e-02, Len=sum([7.2, 6.5, 5.5])=19.1, ϰ=[9.7, 13.1, 11.7], ∫ϰ²/L=[19.5, 27.2, 16.7], C-C-Sep=0.19, ║∇J║=2.8e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 34/1000-----
+J=3.4e-02, Jf=1.7e-02, ⟨B·n⟩=2.9e-02, Len=sum([7.2, 6.5, 5.4])=19.1, ϰ=[9.9, 13.3, 11.3], ∫ϰ²/L=[19.2, 26.5, 16.4], C-C-Sep=0.19, ║∇J║=2.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 35/1000-----
+J=3.3e-02, Jf=1.7e-02, ⟨B·n⟩=2.9e-02, Len=sum([7.2, 6.5, 5.5])=19.2, ϰ=[9.8, 11.8, 11.4], ∫ϰ²/L=[19.2, 25.5, 16.4], C-C-Sep=0.19, ║∇J║=2.0e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 36/1000-----
+J=3.3e-02, Jf=1.6e-02, ⟨B·n⟩=2.8e-02, Len=sum([7.2, 6.5, 5.5])=19.2, ϰ=[9.4, 11.8, 10.6], ∫ϰ²/L=[18.8, 23.8, 15.4], C-C-Sep=0.19, ║∇J║=1.8e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 37/1000-----
+J=3.2e-02, Jf=1.6e-02, ⟨B·n⟩=2.8e-02, Len=sum([7.3, 6.5, 5.5])=19.2, ϰ=[9.1, 12.4, 9.2], ∫ϰ²/L=[18.3, 22.8, 14.2], C-C-Sep=0.19, ║∇J║=2.2e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 38/1000-----
+J=3.2e-02, Jf=1.5e-02, ⟨B·n⟩=2.8e-02, Len=sum([7.3, 6.5, 5.5])=19.3, ϰ=[8.9, 12.8, 8.4], ∫ϰ²/L=[18.0, 22.4, 13.7], C-C-Sep=0.19, ║∇J║=2.2e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 39/1000-----
+J=3.1e-02, Jf=1.5e-02, ⟨B·n⟩=2.7e-02, Len=sum([7.3, 6.5, 5.5])=19.2, ϰ=[8.5, 13.0, 8.8], ∫ϰ²/L=[17.1, 21.9, 12.9], C-C-Sep=0.19, ║∇J║=1.9e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 40/1000-----
+J=3.1e-02, Jf=1.4e-02, ⟨B·n⟩=2.7e-02, Len=sum([7.4, 6.6, 5.5])=19.5, ϰ=[8.4, 13.7, 8.6], ∫ϰ²/L=[17.0, 22.5, 14.1], C-C-Sep=0.19, ║∇J║=2.4e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 41/1000-----
+J=3.0e-02, Jf=1.4e-02, ⟨B·n⟩=2.7e-02, Len=sum([7.4, 6.6, 5.5])=19.5, ϰ=[8.4, 13.3, 8.4], ∫ϰ²/L=[16.4, 22.2, 14.2], C-C-Sep=0.20, ║∇J║=1.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 42/1000-----
+J=3.0e-02, Jf=1.3e-02, ⟨B·n⟩=2.6e-02, Len=sum([7.4, 6.6, 5.5])=19.5, ϰ=[8.6, 13.0, 8.5], ∫ϰ²/L=[15.7, 22.2, 14.8], C-C-Sep=0.19, ║∇J║=1.5e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 43/1000-----
+J=2.9e-02, Jf=1.3e-02, ⟨B·n⟩=2.6e-02, Len=sum([7.4, 6.7, 5.5])=19.6, ϰ=[9.1, 11.4, 9.0], ∫ϰ²/L=[14.7, 22.5, 15.9], C-C-Sep=0.19, ║∇J║=2.2e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 44/1000-----
+J=2.9e-02, Jf=1.2e-02, ⟨B·n⟩=2.6e-02, Len=sum([7.4, 6.7, 5.6])=19.7, ϰ=[8.7, 10.2, 9.8], ∫ϰ²/L=[14.2, 22.9, 17.1], C-C-Sep=0.19, ║∇J║=2.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 45/1000-----
+J=2.8e-02, Jf=1.2e-02, ⟨B·n⟩=2.5e-02, Len=sum([7.3, 6.7, 5.5])=19.5, ϰ=[8.1, 10.2, 10.1], ∫ϰ²/L=[13.6, 21.9, 15.8], C-C-Sep=0.20, ║∇J║=2.1e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 46/1000-----
+J=2.8e-02, Jf=1.2e-02, ⟨B·n⟩=2.5e-02, Len=sum([7.3, 6.7, 5.6])=19.6, ϰ=[8.4, 10.2, 9.9], ∫ϰ²/L=[13.6, 22.2, 16.1], C-C-Sep=0.19, ║∇J║=1.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 47/1000-----
+J=2.8e-02, Jf=1.1e-02, ⟨B·n⟩=2.5e-02, Len=sum([7.3, 6.7, 5.5])=19.6, ϰ=[8.6, 9.6, 9.9], ∫ϰ²/L=[13.2, 21.8, 15.2], C-C-Sep=0.19, ║∇J║=1.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 48/1000-----
+J=2.7e-02, Jf=1.1e-02, ⟨B·n⟩=2.4e-02, Len=sum([7.3, 6.7, 5.6])=19.6, ϰ=[9.0, 9.6, 9.9], ∫ϰ²/L=[12.8, 21.8, 14.7], C-C-Sep=0.20, ║∇J║=1.7e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 49/1000-----
+J=2.7e-02, Jf=9.9e-03, ⟨B·n⟩=2.3e-02, Len=sum([7.3, 6.8, 5.6])=19.7, ϰ=[9.5, 9.8, 9.9], ∫ϰ²/L=[13.6, 23.8, 16.0], C-C-Sep=0.19, ║∇J║=2.9e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 50/1000-----
+J=2.7e-02, Jf=9.9e-03, ⟨B·n⟩=2.3e-02, Len=sum([7.3, 6.7, 5.6])=19.6, ϰ=[9.1, 10.7, 9.2], ∫ϰ²/L=[12.9, 23.4, 15.6], C-C-Sep=0.19, ║∇J║=2.9e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 51/1000-----
+J=2.6e-02, Jf=9.9e-03, ⟨B·n⟩=2.3e-02, Len=sum([7.2, 6.7, 5.6])=19.5, ϰ=[9.0, 11.2, 8.3], ∫ϰ²/L=[12.3, 22.1, 14.3], C-C-Sep=0.20, ║∇J║=2.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 52/1000-----
+J=2.6e-02, Jf=9.7e-03, ⟨B·n⟩=2.3e-02, Len=sum([7.3, 6.7, 5.6])=19.6, ϰ=[9.0, 11.3, 8.1], ∫ϰ²/L=[12.6, 22.3, 14.4], C-C-Sep=0.20, ║∇J║=1.3e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 53/1000-----
+J=2.6e-02, Jf=9.3e-03, ⟨B·n⟩=2.2e-02, Len=sum([7.3, 6.8, 5.6])=19.6, ϰ=[9.0, 11.8, 7.5], ∫ϰ²/L=[13.1, 22.8, 14.5], C-C-Sep=0.19, ║∇J║=1.2e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 54/1000-----
+J=2.5e-02, Jf=8.9e-03, ⟨B·n⟩=2.2e-02, Len=sum([7.3, 6.8, 5.6])=19.6, ϰ=[9.2, 12.0, 7.1], ∫ϰ²/L=[13.7, 23.2, 14.4], C-C-Sep=0.19, ║∇J║=1.7e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 55/1000-----
+J=2.5e-02, Jf=8.3e-03, ⟨B·n⟩=2.1e-02, Len=sum([7.2, 6.8, 5.6])=19.6, ϰ=[9.5, 11.5, 7.8], ∫ϰ²/L=[14.3, 23.1, 14.4], C-C-Sep=0.20, ║∇J║=2.3e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 56/1000-----
+J=2.4e-02, Jf=7.7e-03, ⟨B·n⟩=2.0e-02, Len=sum([7.2, 6.8, 5.6])=19.6, ϰ=[9.4, 11.0, 8.8], ∫ϰ²/L=[14.9, 22.6, 15.4], C-C-Sep=0.19, ║∇J║=3.1e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 57/1000-----
+J=2.4e-02, Jf=7.7e-03, ⟨B·n⟩=2.0e-02, Len=sum([7.2, 6.8, 5.6])=19.6, ϰ=[9.4, 10.5, 8.4], ∫ϰ²/L=[14.8, 21.8, 14.6], C-C-Sep=0.20, ║∇J║=1.6e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 58/1000-----
+J=2.4e-02, Jf=7.6e-03, ⟨B·n⟩=2.0e-02, Len=sum([7.2, 6.8, 5.6])=19.5, ϰ=[9.4, 9.8, 8.5], ∫ϰ²/L=[14.1, 20.5, 14.4], C-C-Sep=0.20, ║∇J║=1.4e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 59/1000-----
+J=2.3e-02, Jf=7.1e-03, ⟨B·n⟩=1.9e-02, Len=sum([7.2, 6.8, 5.6])=19.6, ϰ=[9.1, 9.4, 8.8], ∫ϰ²/L=[15.1, 21.0, 14.7], C-C-Sep=0.19, ║∇J║=2.0e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 60/1000-----
+J=2.3e-02, Jf=6.4e-03, ⟨B·n⟩=1.8e-02, Len=sum([7.1, 6.8, 5.6])=19.5, ϰ=[8.7, 8.9, 9.1], ∫ϰ²/L=[14.6, 20.5, 15.4], C-C-Sep=0.19, ║∇J║=2.8e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 61/1000-----
+J=2.3e-02, Jf=6.2e-03, ⟨B·n⟩=1.8e-02, Len=sum([7.1, 6.8, 5.6])=19.5, ϰ=[8.9, 8.7, 7.9], ∫ϰ²/L=[14.9, 20.2, 15.1], C-C-Sep=0.20, ║∇J║=1.7e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 62/1000-----
+J=2.2e-02, Jf=5.8e-03, ⟨B·n⟩=1.7e-02, Len=sum([7.1, 6.9, 5.6])=19.6, ϰ=[8.8, 9.0, 8.3], ∫ϰ²/L=[15.6, 20.4, 15.7], C-C-Sep=0.20, ║∇J║=1.4e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 63/1000-----
+J=2.2e-02, Jf=5.2e-03, ⟨B·n⟩=1.7e-02, Len=sum([7.2, 6.9, 5.6])=19.7, ϰ=[8.3, 9.1, 9.2], ∫ϰ²/L=[16.2, 20.3, 16.2], C-C-Sep=0.19, ║∇J║=1.9e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 64/1000-----
+J=2.1e-02, Jf=4.8e-03, ⟨B·n⟩=1.6e-02, Len=sum([7.1, 7.0, 5.7])=19.8, ϰ=[7.9, 9.3, 9.4], ∫ϰ²/L=[16.5, 19.8, 16.0], C-C-Sep=0.19, ║∇J║=1.9e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 65/1000-----
+J=2.1e-02, Jf=4.5e-03, ⟨B·n⟩=1.6e-02, Len=sum([7.1, 7.0, 5.7])=19.7, ϰ=[8.2, 8.8, 9.9], ∫ϰ²/L=[16.7, 20.1, 16.1], C-C-Sep=0.20, ║∇J║=1.5e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 66/1000-----
+J=2.1e-02, Jf=4.4e-03, ⟨B·n⟩=1.6e-02, Len=sum([7.0, 7.0, 5.6])=19.7, ϰ=[8.5, 8.5, 10.1], ∫ϰ²/L=[15.9, 19.5, 15.4], C-C-Sep=0.20, ║∇J║=1.7e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 67/1000-----
+J=2.0e-02, Jf=4.2e-03, ⟨B·n⟩=1.5e-02, Len=sum([7.0, 7.0, 5.6])=19.7, ϰ=[8.4, 8.6, 9.9], ∫ϰ²/L=[16.3, 20.1, 15.4], C-C-Sep=0.19, ║∇J║=1.5e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 68/1000-----
+J=2.0e-02, Jf=4.2e-03, ⟨B·n⟩=1.5e-02, Len=sum([7.0, 7.0, 5.6])=19.6, ϰ=[8.2, 8.5, 8.8], ∫ϰ²/L=[15.1, 19.0, 14.4], C-C-Sep=0.20, ║∇J║=1.4e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 69/1000-----
+J=2.0e-02, Jf=4.0e-03, ⟨B·n⟩=1.5e-02, Len=sum([7.0, 7.0, 5.6])=19.6, ϰ=[8.4, 8.4, 8.9], ∫ϰ²/L=[15.3, 19.0, 14.3], C-C-Sep=0.20, ║∇J║=1.2e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 70/1000-----
+J=2.0e-02, Jf=3.8e-03, ⟨B·n⟩=1.4e-02, Len=sum([6.9, 7.0, 5.7])=19.6, ϰ=[8.8, 8.2, 8.7], ∫ϰ²/L=[15.0, 18.7, 14.0], C-C-Sep=0.20, ║∇J║=1.1e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 71/1000-----
+J=2.0e-02, Jf=3.7e-03, ⟨B·n⟩=1.4e-02, Len=sum([6.9, 7.0, 5.7])=19.6, ϰ=[8.9, 7.9, 8.3], ∫ϰ²/L=[14.4, 18.0, 13.5], C-C-Sep=0.20, ║∇J║=1.1e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 72/1000-----
+J=2.0e-02, Jf=3.5e-03, ⟨B·n⟩=1.4e-02, Len=sum([6.9, 7.0, 5.7])=19.5, ϰ=[9.3, 7.9, 8.1], ∫ϰ²/L=[13.7, 17.2, 13.1], C-C-Sep=0.20, ║∇J║=1.3e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 73/1000-----
+J=1.9e-02, Jf=3.5e-03, ⟨B·n⟩=1.4e-02, Len=sum([6.8, 7.0, 5.7])=19.5, ϰ=[9.0, 7.9, 8.0], ∫ϰ²/L=[13.1, 16.6, 12.7], C-C-Sep=0.20, ║∇J║=8.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 74/1000-----
+J=1.9e-02, Jf=3.5e-03, ⟨B·n⟩=1.4e-02, Len=sum([6.8, 7.0, 5.7])=19.4, ϰ=[8.8, 7.9, 8.1], ∫ϰ²/L=[12.4, 15.9, 12.3], C-C-Sep=0.20, ║∇J║=7.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 75/1000-----
+J=1.9e-02, Jf=3.4e-03, ⟨B·n⟩=1.4e-02, Len=sum([6.8, 7.0, 5.7])=19.4, ϰ=[8.8, 7.8, 8.1], ∫ϰ²/L=[11.8, 15.5, 12.0], C-C-Sep=0.20, ║∇J║=9.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 76/1000-----
+J=1.9e-02, Jf=3.2e-03, ⟨B·n⟩=1.3e-02, Len=sum([6.7, 6.9, 5.7])=19.3, ϰ=[8.5, 7.5, 8.2], ∫ϰ²/L=[11.2, 15.0, 11.9], C-C-Sep=0.20, ║∇J║=1.2e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 77/1000-----
+J=1.9e-02, Jf=3.2e-03, ⟨B·n⟩=1.3e-02, Len=sum([6.7, 6.9, 5.7])=19.3, ϰ=[8.3, 7.4, 8.0], ∫ϰ²/L=[11.2, 14.9, 11.9], C-C-Sep=0.20, ║∇J║=7.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 78/1000-----
+J=1.9e-02, Jf=3.2e-03, ⟨B·n⟩=1.3e-02, Len=sum([6.7, 6.9, 5.7])=19.3, ϰ=[8.1, 7.3, 8.1], ∫ϰ²/L=[11.1, 14.8, 11.8], C-C-Sep=0.20, ║∇J║=6.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 79/1000-----
+J=1.9e-02, Jf=3.1e-03, ⟨B·n⟩=1.3e-02, Len=sum([6.7, 6.9, 5.7])=19.3, ϰ=[7.8, 7.3, 8.1], ∫ϰ²/L=[11.0, 14.7, 11.7], C-C-Sep=0.20, ║∇J║=7.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 80/1000-----
+J=1.9e-02, Jf=3.1e-03, ⟨B·n⟩=1.3e-02, Len=sum([6.7, 6.9, 5.7])=19.2, ϰ=[7.9, 7.3, 8.1], ∫ϰ²/L=[10.8, 14.7, 11.6], C-C-Sep=0.20, ║∇J║=1.0e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 81/1000-----
+J=1.9e-02, Jf=3.0e-03, ⟨B·n⟩=1.3e-02, Len=sum([6.7, 6.9, 5.7])=19.2, ϰ=[7.9, 7.3, 7.8], ∫ϰ²/L=[10.8, 14.8, 11.6], C-C-Sep=0.20, ║∇J║=7.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 82/1000-----
+J=1.8e-02, Jf=2.9e-03, ⟨B·n⟩=1.3e-02, Len=sum([6.7, 6.9, 5.7])=19.2, ϰ=[7.7, 7.4, 7.2], ∫ϰ²/L=[10.7, 15.0, 11.6], C-C-Sep=0.20, ║∇J║=7.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 83/1000-----
+J=1.8e-02, Jf=2.8e-03, ⟨B·n⟩=1.2e-02, Len=sum([6.6, 6.8, 5.7])=19.2, ϰ=[7.6, 7.3, 7.3], ∫ϰ²/L=[10.7, 15.2, 11.7], C-C-Sep=0.20, ║∇J║=9.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 84/1000-----
+J=1.8e-02, Jf=2.7e-03, ⟨B·n⟩=1.2e-02, Len=sum([6.7, 6.8, 5.7])=19.1, ϰ=[7.6, 7.4, 7.2], ∫ϰ²/L=[10.6, 15.1, 11.7], C-C-Sep=0.20, ║∇J║=7.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 85/1000-----
+J=1.8e-02, Jf=2.6e-03, ⟨B·n⟩=1.2e-02, Len=sum([6.7, 6.8, 5.7])=19.1, ϰ=[7.6, 7.6, 6.9], ∫ϰ²/L=[10.7, 15.1, 11.8], C-C-Sep=0.20, ║∇J║=1.1e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 86/1000-----
+J=1.8e-02, Jf=2.5e-03, ⟨B·n⟩=1.2e-02, Len=sum([6.6, 6.8, 5.7])=19.1, ϰ=[7.8, 7.6, 6.8], ∫ϰ²/L=[10.6, 15.0, 11.4], C-C-Sep=0.20, ║∇J║=1.0e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 87/1000-----
+J=1.8e-02, Jf=2.5e-03, ⟨B·n⟩=1.2e-02, Len=sum([6.6, 6.8, 5.7])=19.1, ϰ=[7.9, 7.4, 6.7], ∫ϰ²/L=[10.3, 14.6, 11.3], C-C-Sep=0.20, ║∇J║=8.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 88/1000-----
+J=1.8e-02, Jf=2.5e-03, ⟨B·n⟩=1.1e-02, Len=sum([6.6, 6.7, 5.7])=19.0, ϰ=[7.8, 7.1, 7.2], ∫ϰ²/L=[10.9, 14.8, 11.6], C-C-Sep=0.19, ║∇J║=8.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 89/1000-----
+J=1.8e-02, Jf=2.4e-03, ⟨B·n⟩=1.1e-02, Len=sum([6.6, 6.7, 5.7])=18.9, ϰ=[7.7, 7.1, 7.2], ∫ϰ²/L=[11.2, 14.8, 11.9], C-C-Sep=0.20, ║∇J║=9.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 90/1000-----
+J=1.8e-02, Jf=2.3e-03, ⟨B·n⟩=1.1e-02, Len=sum([6.6, 6.7, 5.7])=18.9, ϰ=[7.4, 7.3, 7.1], ∫ϰ²/L=[12.0, 15.2, 12.4], C-C-Sep=0.20, ║∇J║=8.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 91/1000-----
+J=1.8e-02, Jf=2.1e-03, ⟨B·n⟩=1.0e-02, Len=sum([6.5, 6.6, 5.7])=18.9, ϰ=[7.7, 7.4, 6.9], ∫ϰ²/L=[12.8, 15.8, 13.0], C-C-Sep=0.20, ║∇J║=1.3e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 92/1000-----
+J=1.7e-02, Jf=2.1e-03, ⟨B·n⟩=1.0e-02, Len=sum([6.5, 6.6, 5.7])=18.8, ϰ=[7.6, 7.3, 6.8], ∫ϰ²/L=[11.9, 15.3, 12.5], C-C-Sep=0.20, ║∇J║=9.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 93/1000-----
+J=1.7e-02, Jf=2.1e-03, ⟨B·n⟩=1.0e-02, Len=sum([6.5, 6.6, 5.7])=18.8, ϰ=[7.6, 7.2, 6.7], ∫ϰ²/L=[11.7, 15.2, 12.3], C-C-Sep=0.20, ║∇J║=6.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 94/1000-----
+J=1.7e-02, Jf=2.0e-03, ⟨B·n⟩=1.0e-02, Len=sum([6.5, 6.6, 5.7])=18.8, ϰ=[7.8, 7.3, 6.3], ∫ϰ²/L=[10.9, 14.7, 11.9], C-C-Sep=0.20, ║∇J║=8.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 95/1000-----
+J=1.7e-02, Jf=2.0e-03, ⟨B·n⟩=9.8e-03, Len=sum([6.5, 6.6, 5.7])=18.7, ϰ=[8.2, 7.9, 6.4], ∫ϰ²/L=[11.0, 15.3, 12.0], C-C-Sep=0.20, ║∇J║=9.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 96/1000-----
+J=1.7e-02, Jf=2.0e-03, ⟨B·n⟩=9.8e-03, Len=sum([6.5, 6.5, 5.7])=18.7, ϰ=[8.4, 7.5, 6.2], ∫ϰ²/L=[10.3, 14.9, 11.5], C-C-Sep=0.20, ║∇J║=6.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 97/1000-----
+J=1.7e-02, Jf=1.9e-03, ⟨B·n⟩=9.7e-03, Len=sum([6.4, 6.5, 5.7])=18.7, ϰ=[8.5, 7.5, 6.5], ∫ϰ²/L=[10.1, 14.9, 11.3], C-C-Sep=0.19, ║∇J║=6.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 98/1000-----
+J=1.7e-02, Jf=1.9e-03, ⟨B·n⟩=9.7e-03, Len=sum([6.4, 6.5, 5.7])=18.6, ϰ=[8.7, 7.4, 6.4], ∫ϰ²/L=[9.7, 14.7, 10.8], C-C-Sep=0.20, ║∇J║=6.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 99/1000-----
+J=1.7e-02, Jf=1.9e-03, ⟨B·n⟩=9.6e-03, Len=sum([6.4, 6.5, 5.7])=18.6, ϰ=[8.7, 7.3, 6.6], ∫ϰ²/L=[10.0, 14.9, 10.8], C-C-Sep=0.20, ║∇J║=6.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 100/1000-----
+J=1.7e-02, Jf=1.9e-03, ⟨B·n⟩=9.5e-03, Len=sum([6.4, 6.5, 5.7])=18.6, ϰ=[8.5, 7.4, 6.5], ∫ϰ²/L=[10.1, 14.7, 10.6], C-C-Sep=0.20, ║∇J║=5.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 101/1000-----
+J=1.7e-02, Jf=1.8e-03, ⟨B·n⟩=9.5e-03, Len=sum([6.4, 6.5, 5.7])=18.6, ϰ=[8.3, 7.6, 6.5], ∫ϰ²/L=[9.9, 14.6, 10.5], C-C-Sep=0.20, ║∇J║=5.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 102/1000-----
+J=1.7e-02, Jf=1.8e-03, ⟨B·n⟩=9.3e-03, Len=sum([6.4, 6.4, 5.7])=18.5, ϰ=[8.2, 7.8, 6.3], ∫ϰ²/L=[10.0, 14.5, 10.5], C-C-Sep=0.20, ║∇J║=6.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 103/1000-----
+J=1.7e-02, Jf=1.8e-03, ⟨B·n⟩=9.2e-03, Len=sum([6.4, 6.4, 5.7])=18.5, ϰ=[8.1, 8.0, 6.2], ∫ϰ²/L=[10.1, 14.2, 10.8], C-C-Sep=0.20, ║∇J║=7.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 104/1000-----
+J=1.7e-02, Jf=1.7e-03, ⟨B·n⟩=9.1e-03, Len=sum([6.3, 6.3, 5.7])=18.4, ϰ=[8.0, 8.4, 6.3], ∫ϰ²/L=[10.4, 14.4, 11.2], C-C-Sep=0.20, ║∇J║=6.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 105/1000-----
+J=1.7e-02, Jf=1.7e-03, ⟨B·n⟩=9.1e-03, Len=sum([6.3, 6.3, 5.7])=18.4, ϰ=[8.0, 8.6, 6.4], ∫ϰ²/L=[10.1, 14.0, 11.2], C-C-Sep=0.20, ║∇J║=8.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 106/1000-----
+J=1.7e-02, Jf=1.7e-03, ⟨B·n⟩=9.0e-03, Len=sum([6.3, 6.3, 5.7])=18.3, ϰ=[8.0, 8.8, 6.4], ∫ϰ²/L=[10.4, 14.2, 11.3], C-C-Sep=0.20, ║∇J║=6.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 107/1000-----
+J=1.6e-02, Jf=1.7e-03, ⟨B·n⟩=9.0e-03, Len=sum([6.3, 6.3, 5.7])=18.3, ϰ=[8.0, 8.8, 6.2], ∫ϰ²/L=[10.0, 13.7, 10.7], C-C-Sep=0.20, ║∇J║=6.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 108/1000-----
+J=1.6e-02, Jf=1.7e-03, ⟨B·n⟩=9.0e-03, Len=sum([6.3, 6.3, 5.7])=18.3, ϰ=[8.0, 8.8, 6.0], ∫ϰ²/L=[10.1, 13.7, 10.5], C-C-Sep=0.20, ║∇J║=5.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 109/1000-----
+J=1.6e-02, Jf=1.6e-03, ⟨B·n⟩=8.9e-03, Len=sum([6.3, 6.2, 5.7])=18.3, ϰ=[7.6, 8.8, 5.8], ∫ϰ²/L=[10.3, 13.7, 10.1], C-C-Sep=0.19, ║∇J║=7.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 110/1000-----
+J=1.6e-02, Jf=1.6e-03, ⟨B·n⟩=8.9e-03, Len=sum([6.3, 6.2, 5.7])=18.2, ϰ=[7.7, 8.7, 6.0], ∫ϰ²/L=[10.5, 13.8, 10.1], C-C-Sep=0.20, ║∇J║=6.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 111/1000-----
+J=1.6e-02, Jf=1.6e-03, ⟨B·n⟩=8.9e-03, Len=sum([6.3, 6.2, 5.7])=18.2, ϰ=[7.6, 8.5, 6.0], ∫ϰ²/L=[10.2, 13.4, 9.8], C-C-Sep=0.20, ║∇J║=4.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 112/1000-----
+J=1.6e-02, Jf=1.6e-03, ⟨B·n⟩=8.8e-03, Len=sum([6.3, 6.2, 5.7])=18.2, ϰ=[7.7, 8.4, 6.0], ∫ϰ²/L=[10.6, 13.4, 9.8], C-C-Sep=0.20, ║∇J║=4.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 113/1000-----
+J=1.6e-02, Jf=1.6e-03, ⟨B·n⟩=8.8e-03, Len=sum([6.3, 6.1, 5.7])=18.1, ϰ=[7.8, 7.9, 5.7], ∫ϰ²/L=[10.5, 12.9, 9.6], C-C-Sep=0.20, ║∇J║=6.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 114/1000-----
+J=1.6e-02, Jf=1.5e-03, ⟨B·n⟩=8.7e-03, Len=sum([6.3, 6.1, 5.7])=18.1, ϰ=[8.3, 7.6, 5.6], ∫ϰ²/L=[10.8, 13.0, 9.9], C-C-Sep=0.20, ║∇J║=6.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 115/1000-----
+J=1.6e-02, Jf=1.5e-03, ⟨B·n⟩=8.7e-03, Len=sum([6.3, 6.1, 5.7])=18.1, ϰ=[8.3, 7.5, 5.7], ∫ϰ²/L=[10.7, 12.8, 9.9], C-C-Sep=0.20, ║∇J║=4.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 116/1000-----
+J=1.6e-02, Jf=1.5e-03, ⟨B·n⟩=8.7e-03, Len=sum([6.3, 6.1, 5.7])=18.0, ϰ=[8.5, 7.4, 6.0], ∫ϰ²/L=[10.7, 12.8, 10.1], C-C-Sep=0.20, ║∇J║=6.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 117/1000-----
+J=1.6e-02, Jf=1.5e-03, ⟨B·n⟩=8.7e-03, Len=sum([6.2, 6.1, 5.7])=18.0, ϰ=[8.6, 7.3, 5.8], ∫ϰ²/L=[10.3, 12.1, 9.9], C-C-Sep=0.19, ║∇J║=7.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 118/1000-----
+J=1.6e-02, Jf=1.5e-03, ⟨B·n⟩=8.6e-03, Len=sum([6.2, 6.0, 5.7])=18.0, ϰ=[8.7, 7.3, 5.9], ∫ϰ²/L=[10.4, 12.0, 10.0], C-C-Sep=0.20, ║∇J║=5.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 119/1000-----
+J=1.6e-02, Jf=1.5e-03, ⟨B·n⟩=8.5e-03, Len=sum([6.2, 6.0, 5.7])=18.0, ϰ=[8.8, 7.6, 6.0], ∫ϰ²/L=[10.7, 12.0, 10.3], C-C-Sep=0.20, ║∇J║=5.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 120/1000-----
+J=1.6e-02, Jf=1.4e-03, ⟨B·n⟩=8.5e-03, Len=sum([6.2, 6.0, 5.7])=17.9, ϰ=[8.6, 8.0, 6.2], ∫ϰ²/L=[11.0, 12.1, 10.5], C-C-Sep=0.20, ║∇J║=6.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 121/1000-----
+J=1.6e-02, Jf=1.4e-03, ⟨B·n⟩=8.5e-03, Len=sum([6.2, 6.0, 5.7])=17.9, ϰ=[8.5, 8.0, 6.1], ∫ϰ²/L=[11.0, 12.1, 10.5], C-C-Sep=0.20, ║∇J║=5.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 122/1000-----
+J=1.6e-02, Jf=1.4e-03, ⟨B·n⟩=8.4e-03, Len=sum([6.2, 5.9, 5.7])=17.8, ϰ=[8.6, 7.7, 6.1], ∫ϰ²/L=[10.9, 12.2, 10.4], C-C-Sep=0.20, ║∇J║=5.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 123/1000-----
+J=1.6e-02, Jf=1.4e-03, ⟨B·n⟩=8.4e-03, Len=sum([6.2, 5.9, 5.7])=17.8, ϰ=[8.9, 7.5, 6.3], ∫ϰ²/L=[10.7, 12.5, 10.5], C-C-Sep=0.20, ║∇J║=6.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 124/1000-----
+J=1.6e-02, Jf=1.4e-03, ⟨B·n⟩=8.4e-03, Len=sum([6.2, 5.9, 5.7])=17.8, ϰ=[8.8, 7.6, 6.6], ∫ϰ²/L=[10.6, 12.5, 10.6], C-C-Sep=0.20, ║∇J║=5.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 125/1000-----
+J=1.6e-02, Jf=1.4e-03, ⟨B·n⟩=8.3e-03, Len=sum([6.2, 5.9, 5.7])=17.7, ϰ=[8.6, 7.7, 6.7], ∫ϰ²/L=[10.4, 12.3, 10.5], C-C-Sep=0.20, ║∇J║=4.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 126/1000-----
+J=1.6e-02, Jf=1.3e-03, ⟨B·n⟩=8.3e-03, Len=sum([6.2, 5.8, 5.7])=17.7, ϰ=[8.4, 7.9, 7.0], ∫ϰ²/L=[10.7, 12.5, 10.6], C-C-Sep=0.20, ║∇J║=5.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 127/1000-----
+J=1.6e-02, Jf=1.3e-03, ⟨B·n⟩=8.3e-03, Len=sum([6.2, 5.8, 5.7])=17.7, ϰ=[8.3, 8.1, 7.1], ∫ϰ²/L=[10.6, 12.3, 10.1], C-C-Sep=0.20, ║∇J║=5.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 128/1000-----
+J=1.6e-02, Jf=1.3e-03, ⟨B·n⟩=8.2e-03, Len=sum([6.1, 5.8, 5.7])=17.6, ϰ=[8.5, 8.0, 7.5], ∫ϰ²/L=[10.8, 12.5, 10.0], C-C-Sep=0.20, ║∇J║=5.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 129/1000-----
+J=1.6e-02, Jf=1.3e-03, ⟨B·n⟩=8.2e-03, Len=sum([6.1, 5.8, 5.7])=17.6, ϰ=[8.3, 8.0, 7.2], ∫ϰ²/L=[10.7, 12.5, 9.8], C-C-Sep=0.20, ║∇J║=5.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 130/1000-----
+J=1.5e-02, Jf=1.3e-03, ⟨B·n⟩=8.1e-03, Len=sum([6.1, 5.8, 5.7])=17.6, ϰ=[8.4, 8.0, 7.4], ∫ϰ²/L=[11.2, 13.0, 9.9], C-C-Sep=0.20, ║∇J║=5.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 131/1000-----
+J=1.5e-02, Jf=1.3e-03, ⟨B·n⟩=8.1e-03, Len=sum([6.1, 5.7, 5.7])=17.5, ϰ=[8.7, 8.0, 7.3], ∫ϰ²/L=[11.1, 12.6, 9.7], C-C-Sep=0.20, ║∇J║=4.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 132/1000-----
+J=1.5e-02, Jf=1.3e-03, ⟨B·n⟩=8.1e-03, Len=sum([6.1, 5.7, 5.7])=17.5, ϰ=[9.0, 8.4, 7.2], ∫ϰ²/L=[11.3, 12.6, 9.8], C-C-Sep=0.20, ║∇J║=5.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 133/1000-----
+J=1.5e-02, Jf=1.3e-03, ⟨B·n⟩=8.0e-03, Len=sum([6.1, 5.7, 5.7])=17.5, ϰ=[8.9, 8.4, 7.4], ∫ϰ²/L=[11.2, 12.6, 9.9], C-C-Sep=0.20, ║∇J║=5.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 134/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([6.1, 5.7, 5.7])=17.4, ϰ=[8.8, 8.4, 7.5], ∫ϰ²/L=[11.2, 12.6, 10.1], C-C-Sep=0.20, ║∇J║=4.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 135/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([6.1, 5.6, 5.7])=17.4, ϰ=[8.8, 8.2, 7.6], ∫ϰ²/L=[10.9, 12.4, 10.2], C-C-Sep=0.20, ║∇J║=5.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 136/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([6.0, 5.6, 5.7])=17.4, ϰ=[8.8, 8.1, 7.8], ∫ϰ²/L=[11.0, 12.5, 10.5], C-C-Sep=0.20, ║∇J║=5.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 137/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([6.0, 5.6, 5.7])=17.3, ϰ=[8.7, 8.1, 7.8], ∫ϰ²/L=[10.8, 12.1, 10.4], C-C-Sep=0.20, ║∇J║=4.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 138/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([6.0, 5.6, 5.7])=17.3, ϰ=[8.8, 8.1, 7.7], ∫ϰ²/L=[10.7, 11.8, 10.3], C-C-Sep=0.20, ║∇J║=4.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 139/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([6.0, 5.6, 5.7])=17.2, ϰ=[8.8, 7.7, 7.3], ∫ϰ²/L=[10.7, 11.5, 10.1], C-C-Sep=0.20, ║∇J║=5.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 140/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([6.0, 5.5, 5.7])=17.2, ϰ=[8.7, 7.8, 7.1], ∫ϰ²/L=[10.9, 11.5, 10.2], C-C-Sep=0.20, ║∇J║=4.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 141/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([6.0, 5.5, 5.7])=17.2, ϰ=[8.7, 7.7, 6.8], ∫ϰ²/L=[10.9, 11.4, 10.0], C-C-Sep=0.20, ║∇J║=4.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 142/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([6.0, 5.5, 5.7])=17.1, ϰ=[9.1, 7.6, 7.0], ∫ϰ²/L=[11.0, 11.4, 9.8], C-C-Sep=0.20, ║∇J║=4.9e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 143/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.8e-03, Len=sum([6.0, 5.5, 5.7])=17.1, ϰ=[9.2, 7.4, 7.1], ∫ϰ²/L=[11.2, 11.4, 9.9], C-C-Sep=0.20, ║∇J║=4.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 144/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.8e-03, Len=sum([6.0, 5.4, 5.7])=17.1, ϰ=[9.4, 7.8, 7.1], ∫ϰ²/L=[11.0, 11.1, 9.8], C-C-Sep=0.20, ║∇J║=5.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 145/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.8e-03, Len=sum([5.9, 5.4, 5.7])=17.0, ϰ=[9.2, 8.0, 7.3], ∫ϰ²/L=[11.1, 11.5, 10.2], C-C-Sep=0.20, ║∇J║=6.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 146/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.8e-03, Len=sum([5.9, 5.4, 5.7])=17.0, ϰ=[8.8, 8.0, 7.3], ∫ϰ²/L=[10.8, 11.2, 10.2], C-C-Sep=0.20, ║∇J║=5.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 147/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.8e-03, Len=sum([5.9, 5.4, 5.7])=17.0, ϰ=[8.6, 8.0, 7.2], ∫ϰ²/L=[10.6, 11.2, 10.1], C-C-Sep=0.20, ║∇J║=4.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 148/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.8e-03, Len=sum([5.9, 5.4, 5.7])=16.9, ϰ=[8.1, 8.0, 7.3], ∫ϰ²/L=[10.4, 11.3, 10.2], C-C-Sep=0.20, ║∇J║=4.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 149/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([5.9, 5.3, 5.6])=16.9, ϰ=[8.3, 7.9, 7.6], ∫ϰ²/L=[10.4, 11.6, 10.5], C-C-Sep=0.20, ║∇J║=5.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 150/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([5.9, 5.3, 5.6])=16.8, ϰ=[8.4, 8.0, 7.6], ∫ϰ²/L=[10.5, 11.6, 10.6], C-C-Sep=0.20, ║∇J║=5.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 151/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([5.9, 5.3, 5.6])=16.8, ϰ=[8.2, 7.9, 7.2], ∫ϰ²/L=[10.4, 11.3, 10.5], C-C-Sep=0.20, ║∇J║=5.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 152/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([5.8, 5.3, 5.6])=16.7, ϰ=[8.2, 7.8, 7.3], ∫ϰ²/L=[10.4, 11.1, 10.4], C-C-Sep=0.20, ║∇J║=5.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 153/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([5.8, 5.3, 5.6])=16.7, ϰ=[8.1, 8.0, 7.5], ∫ϰ²/L=[10.2, 10.7, 10.5], C-C-Sep=0.20, ║∇J║=6.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 154/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.8, 5.2, 5.6])=16.6, ϰ=[8.0, 8.1, 7.4], ∫ϰ²/L=[10.3, 11.0, 10.7], C-C-Sep=0.20, ║∇J║=5.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 155/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([5.8, 5.2, 5.6])=16.6, ϰ=[8.1, 8.2, 7.3], ∫ϰ²/L=[9.9, 10.5, 10.3], C-C-Sep=0.20, ║∇J║=5.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 156/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.8, 5.2, 5.6])=16.6, ϰ=[8.0, 8.3, 7.4], ∫ϰ²/L=[10.0, 10.7, 10.5], C-C-Sep=0.20, ║∇J║=5.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 157/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.8, 5.2, 5.6])=16.6, ϰ=[8.0, 8.2, 7.4], ∫ϰ²/L=[10.0, 10.8, 10.6], C-C-Sep=0.20, ║∇J║=3.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 158/1000-----
+J=1.5e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.8, 5.2, 5.6])=16.6, ϰ=[7.8, 7.8, 7.3], ∫ϰ²/L=[9.8, 10.9, 10.7], C-C-Sep=0.20, ║∇J║=4.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 159/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.8, 5.2, 5.6])=16.5, ϰ=[7.8, 7.3, 7.0], ∫ϰ²/L=[9.4, 10.5, 10.3], C-C-Sep=0.20, ║∇J║=5.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 160/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.8, 5.2, 5.6])=16.5, ϰ=[7.8, 7.3, 6.9], ∫ϰ²/L=[9.4, 10.5, 10.3], C-C-Sep=0.20, ║∇J║=4.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 161/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.7, 5.2, 5.5])=16.4, ϰ=[8.0, 7.2, 6.9], ∫ϰ²/L=[9.4, 10.7, 10.4], C-C-Sep=0.20, ║∇J║=4.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 162/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.7, 5.2, 5.5])=16.4, ϰ=[8.2, 7.4, 6.9], ∫ϰ²/L=[9.4, 10.4, 10.1], C-C-Sep=0.20, ║∇J║=4.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 163/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.7, 5.1, 5.5])=16.4, ϰ=[8.3, 7.7, 6.8], ∫ϰ²/L=[9.8, 10.6, 10.1], C-C-Sep=0.20, ║∇J║=6.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 164/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.7, 5.1, 5.5])=16.3, ϰ=[8.2, 7.9, 6.9], ∫ϰ²/L=[9.8, 10.5, 10.1], C-C-Sep=0.20, ║∇J║=5.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 165/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.7, 5.1, 5.5])=16.3, ϰ=[8.1, 7.9, 7.0], ∫ϰ²/L=[9.6, 10.4, 10.0], C-C-Sep=0.20, ║∇J║=5.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 166/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.7, 5.1, 5.5])=16.3, ϰ=[8.3, 7.8, 6.9], ∫ϰ²/L=[9.9, 10.7, 10.2], C-C-Sep=0.20, ║∇J║=4.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 167/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.7, 5.1, 5.5])=16.3, ϰ=[8.2, 7.7, 6.9], ∫ϰ²/L=[10.0, 10.9, 10.3], C-C-Sep=0.20, ║∇J║=3.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 168/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.7, 5.1, 5.5])=16.2, ϰ=[8.3, 7.7, 7.0], ∫ϰ²/L=[10.3, 10.9, 10.4], C-C-Sep=0.20, ║∇J║=4.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 169/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.7, 5.1, 5.5])=16.2, ϰ=[8.1, 7.4, 7.1], ∫ϰ²/L=[10.2, 10.7, 10.3], C-C-Sep=0.20, ║∇J║=4.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 170/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([5.7, 5.1, 5.4])=16.2, ϰ=[8.1, 7.0, 7.1], ∫ϰ²/L=[10.1, 10.6, 10.2], C-C-Sep=0.20, ║∇J║=4.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 171/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([5.6, 5.1, 5.4])=16.1, ϰ=[8.3, 7.0, 7.4], ∫ϰ²/L=[10.2, 10.8, 10.4], C-C-Sep=0.20, ║∇J║=4.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 172/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([5.6, 5.0, 5.4])=16.1, ϰ=[8.2, 7.2, 7.5], ∫ϰ²/L=[9.9, 10.6, 10.4], C-C-Sep=0.20, ║∇J║=4.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 173/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.6, 5.0, 5.4])=16.1, ϰ=[8.1, 7.3, 7.6], ∫ϰ²/L=[10.2, 11.0, 10.6], C-C-Sep=0.20, ║∇J║=4.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 174/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=7.9e-03, Len=sum([5.6, 5.0, 5.4])=16.0, ϰ=[8.0, 7.5, 7.8], ∫ϰ²/L=[10.3, 11.1, 10.6], C-C-Sep=0.20, ║∇J║=5.9e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 175/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.6, 5.0, 5.4])=16.0, ϰ=[7.9, 7.5, 7.8], ∫ϰ²/L=[10.4, 11.2, 10.5], C-C-Sep=0.20, ║∇J║=4.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 176/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.6, 5.0, 5.4])=16.0, ϰ=[8.1, 7.6, 7.5], ∫ϰ²/L=[10.2, 10.9, 10.3], C-C-Sep=0.20, ║∇J║=4.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 177/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.6, 5.0, 5.4])=15.9, ϰ=[8.5, 7.4, 7.5], ∫ϰ²/L=[10.2, 10.8, 10.3], C-C-Sep=0.20, ║∇J║=3.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 178/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.6, 5.0, 5.3])=15.9, ϰ=[8.9, 7.4, 7.6], ∫ϰ²/L=[10.4, 10.9, 10.4], C-C-Sep=0.20, ║∇J║=3.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 179/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.6, 5.0, 5.3])=15.8, ϰ=[9.1, 7.6, 7.7], ∫ϰ²/L=[10.5, 11.0, 10.5], C-C-Sep=0.20, ║∇J║=4.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 180/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.0e-03, Len=sum([5.5, 5.0, 5.3])=15.8, ϰ=[8.7, 7.7, 7.8], ∫ϰ²/L=[10.4, 11.0, 10.4], C-C-Sep=0.20, ║∇J║=4.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 181/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.1e-03, Len=sum([5.5, 4.9, 5.3])=15.8, ϰ=[8.5, 7.7, 7.8], ∫ϰ²/L=[10.3, 11.0, 10.4], C-C-Sep=0.20, ║∇J║=3.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 182/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.1e-03, Len=sum([5.5, 4.9, 5.3])=15.7, ϰ=[8.2, 7.6, 7.7], ∫ϰ²/L=[10.1, 10.8, 10.3], C-C-Sep=0.20, ║∇J║=4.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 183/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.1e-03, Len=sum([5.5, 4.9, 5.3])=15.7, ϰ=[8.2, 7.4, 7.8], ∫ϰ²/L=[10.1, 10.8, 10.3], C-C-Sep=0.20, ║∇J║=3.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 184/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.1e-03, Len=sum([5.5, 4.9, 5.3])=15.7, ϰ=[8.4, 7.2, 7.7], ∫ϰ²/L=[10.0, 10.6, 10.2], C-C-Sep=0.20, ║∇J║=3.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 185/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.2e-03, Len=sum([5.5, 4.9, 5.2])=15.6, ϰ=[8.7, 7.0, 8.0], ∫ϰ²/L=[10.3, 10.7, 10.3], C-C-Sep=0.20, ║∇J║=4.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 186/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.2e-03, Len=sum([5.5, 4.9, 5.2])=15.6, ϰ=[8.8, 7.0, 8.0], ∫ϰ²/L=[10.3, 10.6, 10.3], C-C-Sep=0.20, ║∇J║=4.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 187/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.3e-03, Len=sum([5.5, 4.9, 5.2])=15.6, ϰ=[8.9, 7.0, 8.2], ∫ϰ²/L=[10.4, 10.6, 10.3], C-C-Sep=0.19, ║∇J║=5.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 188/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.2e-03, Len=sum([5.5, 4.9, 5.2])=15.6, ϰ=[9.1, 7.1, 8.3], ∫ϰ²/L=[9.9, 10.0, 9.8], C-C-Sep=0.20, ║∇J║=1.0e-01
+-----On 1/20 Initial Guess Perturbations
+Iteration 189/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.3e-03, Len=sum([5.5, 4.9, 5.2])=15.6, ϰ=[9.0, 7.0, 7.9], ∫ϰ²/L=[10.1, 10.2, 10.1], C-C-Sep=0.20, ║∇J║=4.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 190/1000-----
+J=1.4e-02, Jf=1.2e-03, ⟨B·n⟩=8.3e-03, Len=sum([5.5, 4.9, 5.2])=15.6, ϰ=[8.7, 7.0, 7.9], ∫ϰ²/L=[10.0, 9.9, 10.0], C-C-Sep=0.20, ║∇J║=3.4e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 191/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.3e-03, Len=sum([5.5, 4.9, 5.2])=15.5, ϰ=[8.8, 7.0, 7.9], ∫ϰ²/L=[10.0, 9.8, 9.9], C-C-Sep=0.20, ║∇J║=2.9e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 192/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.3e-03, Len=sum([5.5, 4.9, 5.2])=15.5, ϰ=[8.9, 7.1, 7.7], ∫ϰ²/L=[10.0, 9.8, 9.9], C-C-Sep=0.20, ║∇J║=3.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 193/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.4e-03, Len=sum([5.4, 4.8, 5.2])=15.5, ϰ=[9.0, 7.3, 7.8], ∫ϰ²/L=[10.1, 10.1, 10.1], C-C-Sep=0.20, ║∇J║=4.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 194/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.4e-03, Len=sum([5.4, 4.8, 5.2])=15.4, ϰ=[8.9, 7.4, 7.8], ∫ϰ²/L=[10.1, 10.0, 10.0], C-C-Sep=0.20, ║∇J║=3.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 195/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.4e-03, Len=sum([5.4, 4.8, 5.2])=15.4, ϰ=[8.9, 7.5, 7.7], ∫ϰ²/L=[10.0, 9.8, 9.9], C-C-Sep=0.20, ║∇J║=2.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 196/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.4e-03, Len=sum([5.4, 4.8, 5.2])=15.4, ϰ=[9.0, 7.5, 7.7], ∫ϰ²/L=[10.0, 9.5, 9.7], C-C-Sep=0.20, ║∇J║=2.8e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 197/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.4e-03, Len=sum([5.4, 4.8, 5.1])=15.4, ϰ=[9.0, 7.6, 7.8], ∫ϰ²/L=[10.1, 9.3, 9.7], C-C-Sep=0.20, ║∇J║=3.0e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 198/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.5e-03, Len=sum([5.4, 4.8, 5.1])=15.4, ϰ=[9.1, 7.5, 7.7], ∫ϰ²/L=[10.2, 9.3, 9.7], C-C-Sep=0.20, ║∇J║=4.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 199/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.5e-03, Len=sum([5.4, 4.8, 5.1])=15.3, ϰ=[9.0, 7.5, 7.7], ∫ϰ²/L=[10.2, 9.2, 9.7], C-C-Sep=0.20, ║∇J║=2.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 200/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.5e-03, Len=sum([5.4, 4.8, 5.1])=15.3, ϰ=[8.8, 7.6, 7.8], ∫ϰ²/L=[10.1, 9.1, 9.7], C-C-Sep=0.20, ║∇J║=2.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 201/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.5e-03, Len=sum([5.4, 4.8, 5.1])=15.3, ϰ=[8.8, 7.7, 7.9], ∫ϰ²/L=[10.1, 9.2, 9.7], C-C-Sep=0.20, ║∇J║=2.9e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 202/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.5e-03, Len=sum([5.4, 4.8, 5.1])=15.3, ϰ=[8.7, 7.8, 8.0], ∫ϰ²/L=[10.2, 9.4, 9.8], C-C-Sep=0.20, ║∇J║=3.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 203/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.6e-03, Len=sum([5.4, 4.8, 5.1])=15.2, ϰ=[8.7, 8.1, 8.1], ∫ϰ²/L=[10.3, 9.8, 9.9], C-C-Sep=0.20, ║∇J║=3.2e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 204/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.6e-03, Len=sum([5.4, 4.8, 5.1])=15.2, ϰ=[8.7, 8.0, 8.0], ∫ϰ²/L=[10.3, 9.7, 9.9], C-C-Sep=0.20, ║∇J║=2.6e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 205/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.6e-03, Len=sum([5.4, 4.8, 5.1])=15.2, ϰ=[8.7, 7.8, 7.8], ∫ϰ²/L=[10.2, 9.4, 9.7], C-C-Sep=0.20, ║∇J║=2.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 206/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.6e-03, Len=sum([5.4, 4.8, 5.1])=15.2, ϰ=[8.8, 7.5, 7.7], ∫ϰ²/L=[10.3, 9.4, 9.6], C-C-Sep=0.20, ║∇J║=2.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 207/1000-----
+J=1.4e-02, Jf=1.3e-03, ⟨B·n⟩=8.7e-03, Len=sum([5.4, 4.8, 5.1])=15.2, ϰ=[8.6, 7.4, 7.5], ∫ϰ²/L=[10.4, 9.6, 9.7], C-C-Sep=0.20, ║∇J║=2.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 208/1000-----
+J=1.3e-02, Jf=1.3e-03, ⟨B·n⟩=8.6e-03, Len=sum([5.3, 4.8, 5.1])=15.2, ϰ=[8.4, 7.4, 7.6], ∫ϰ²/L=[10.5, 9.7, 9.7], C-C-Sep=0.20, ║∇J║=3.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 209/1000-----
+J=1.3e-02, Jf=1.3e-03, ⟨B·n⟩=8.7e-03, Len=sum([5.3, 4.8, 5.1])=15.2, ϰ=[8.3, 7.5, 7.6], ∫ϰ²/L=[10.3, 9.6, 9.6], C-C-Sep=0.20, ║∇J║=2.7e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 210/1000-----
+J=1.3e-02, Jf=1.3e-03, ⟨B·n⟩=8.7e-03, Len=sum([5.3, 4.8, 5.1])=15.1, ϰ=[8.3, 7.7, 7.6], ∫ϰ²/L=[10.2, 9.5, 9.6], C-C-Sep=0.20, ║∇J║=2.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 211/1000-----
+J=1.3e-02, Jf=1.3e-03, ⟨B·n⟩=8.7e-03, Len=sum([5.3, 4.8, 5.0])=15.1, ϰ=[8.2, 7.8, 7.7], ∫ϰ²/L=[10.1, 9.4, 9.6], C-C-Sep=0.20, ║∇J║=2.3e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 212/1000-----
+J=1.3e-02, Jf=1.3e-03, ⟨B·n⟩=8.7e-03, Len=sum([5.3, 4.7, 5.0])=15.1, ϰ=[8.1, 7.9, 7.7], ∫ϰ²/L=[10.2, 9.5, 9.7], C-C-Sep=0.20, ║∇J║=2.5e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 213/1000-----
+J=1.3e-02, Jf=1.3e-03, ⟨B·n⟩=8.7e-03, Len=sum([5.3, 4.7, 5.0])=15.1, ϰ=[8.1, 7.9, 7.6], ∫ϰ²/L=[10.3, 9.4, 9.8], C-C-Sep=0.20, ║∇J║=3.1e-02
+-----On 1/20 Initial Guess Perturbations
+Iteration 214/1000-----
+J=1.3e-02, Jf=1.3e-03, ⟨B·n⟩=8.7e-03, Len=sum([5.3, 4.7, 5.0])=15.1, ϰ=[8.2, 7.9, 7.5], ∫ϰ²/L=[10.4, 9.3, 9.8], C-C-Sep=0.20, ║∇J║=2.2e-02
+-----On 1/20 Initial Guess Perturbations
+slurmstepd: error: *** JOB 65237816 ON cm012 CANCELLED AT 2025-08-20T01:19:01 ***

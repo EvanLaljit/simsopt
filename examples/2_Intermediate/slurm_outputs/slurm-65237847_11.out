@@ -1,0 +1,35 @@
+Running initial guess perturbation 11
+Coil 0: RMS error: 0.000004, Relative: 0.000002
+Max point error: 0.000020, Min point error: 0.000000
+Coil 1: RMS error: 0.000003, Relative: 0.000002
+Max point error: 0.000018, Min point error: 0.000000
+Coil 2: RMS error: 0.000003, Relative: 0.000001
+Max point error: 0.000020, Min point error: 0.000000
+Overall fit errors: [3.60279870793201e-06, 2.9883506905446012e-06, 2.639064208259388e-06]
+Mean fit error: 0.000003
+
+################################################################################
+### Perform a Taylor test ######################################################
+################################################################################
+
+Iteration 1/2000-----
+J=1.7e-01, ⟨Jf⟩=5.0e-02, ⟨B·n⟩=5.6e-02, Len=sum([5.8, 5.3, 5.6])=16.7, ϰ=[9.5, 3.1, 4.1], ∫ϰ²/L>=[3.6, 2.4, 1.7], C-C-Sep=0.08, ║∇J║=6.8e+00
+-----On 12/20 Initial Guess Perturbations
+Iteration 2/2000-----
+J=1.7e-01, ⟨Jf⟩=5.0e-02, ⟨B·n⟩=5.6e-02, Len=sum([5.8, 5.3, 5.6])=16.7, ϰ=[9.8, 11.7, 8.9], ∫ϰ²/L>=[5.8, 5.9, 4.1], C-C-Sep=0.08, ║∇J║=6.9e+00
+-----On 12/20 Initial Guess Perturbations
+Iteration 3/2000-----
+J=1.7e-01, ⟨Jf⟩=5.0e-02, ⟨B·n⟩=5.6e-02, Len=sum([5.8, 5.3, 5.6])=16.7, ϰ=[9.4, 9.3, 6.7], ∫ϰ²/L>=[5.3, 5.7, 3.8], C-C-Sep=0.08, ║∇J║=6.9e+00
+-----On 12/20 Initial Guess Perturbations
+err -0.18124220745598407
+Iteration 4/2000-----
+J=1.7e-01, ⟨Jf⟩=5.0e-02, ⟨B·n⟩=5.6e-02, Len=sum([5.8, 5.3, 5.6])=16.7, ϰ=[9.5, 3.1, 4.2], ∫ϰ²/L>=[3.6, 2.5, 1.7], C-C-Sep=0.08, ║∇J║=6.8e+00
+-----On 12/20 Initial Guess Perturbations
+Iteration 5/2000-----
+J=1.7e-01, ⟨Jf⟩=5.0e-02, ⟨B·n⟩=5.6e-02, Len=sum([5.8, 5.3, 5.6])=16.7, ϰ=[9.5, 3.2, 4.2], ∫ϰ²/L>=[3.6, 2.5, 1.7], C-C-Sep=0.08, ║∇J║=6.9e+00
+-----On 12/20 Initial Guess Perturbations
+err -0.001954981176988335
+Iteration 6/2000-----
+J=1.7e-01, ⟨Jf⟩=5.0e-02, ⟨B·n⟩=5.6e-02, Len=sum([5.8, 5.3, 5.6])=16.7, ϰ=[9.5, 3.1, 4.1], ∫ϰ²/L>=[3.6, 2.4, 1.7], C-C-Sep=0.08, ║∇J║=6.8e+00
+-----On 12/20 Initial Guess Perturbations
+slurmstepd: error: *** JOB 65237861 ON cl004 CANCELLED AT 2025-08-20T01:19:01 ***

@@ -1,0 +1,6 @@
+Running initial guess perturbation 0
+Traceback (most recent call last):
+  File "/scratch/projects/kaptanoglulab/EL/simsopt/examples/2_Intermediate/stage_two_optimization_stochastic_NCSX.py", line 206, in <module>
+    basis.append(np.cos(m*theta))
+                          ^^^^^
+NameError: name 'theta' is not defined. Did you mean: 'ntheta'?

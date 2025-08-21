@@ -1,0 +1,82 @@
+Running initial guess perturbation 0
+
+################################################################################
+### Perform a Taylor test ######################################################
+################################################################################
+
+Iteration 1/1-----
+J=3.6e-02, Jf=4.8e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[63.8, 208.0, 53.7, 9.8], ∫ϰ²/L=[48.4, 123.9, 32.8, 9.0], C-C-Sep=0.01, ║∇J║=1.1e+01
+-----On 1/20 Initial Guess Perturbations
+Iteration 2/1-----
+J=4.7e-02, Jf=4.8e-07, ⟨B·n⟩=7.5e-05, Len=sum([3.5, 3.2, 3.2, 3.7])=13.5, ϰ=[53.1, 242.2, 55.5, 30.9], ∫ϰ²/L=[60.3, 172.4, 63.1, 26.8], C-C-Sep=0.01, ║∇J║=1.7e+01
+-----On 1/20 Initial Guess Perturbations
+Iteration 3/1-----
+J=4.5e-02, Jf=4.7e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.5, 3.2, 3.2, 3.7])=13.6, ϰ=[98.0, 214.6, 61.2, 25.8], ∫ϰ²/L=[71.8, 153.4, 57.7, 23.7], C-C-Sep=0.01, ║∇J║=1.3e+01
+-----On 1/20 Initial Guess Perturbations
+err 0.5812991775263779
+Iteration 4/1-----
+J=3.6e-02, Jf=4.8e-07, ⟨B·n⟩=7.5e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[61.7, 211.1, 53.2, 9.8], ∫ϰ²/L=[48.0, 124.8, 33.1, 9.1], C-C-Sep=0.01, ║∇J║=1.1e+01
+-----On 1/20 Initial Guess Perturbations
+Iteration 5/1-----
+J=3.6e-02, Jf=4.8e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[66.0, 205.1, 54.2, 9.8], ∫ϰ²/L=[49.1, 123.7, 33.0, 9.1], C-C-Sep=0.01, ║∇J║=1.1e+01
+-----On 1/20 Initial Guess Perturbations
+err 0.006954899147310761
+Iteration 6/1-----
+J=3.6e-02, Jf=4.8e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[63.6, 208.3, 53.6, 9.8], ∫ϰ²/L=[48.3, 123.9, 32.8, 9.0], C-C-Sep=0.01, ║∇J║=1.1e+01
+-----On 1/20 Initial Guess Perturbations
+Iteration 7/1-----
+J=3.6e-02, Jf=4.8e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[64.0, 207.7, 53.7, 9.8], ∫ϰ²/L=[48.4, 123.8, 32.8, 9.0], C-C-Sep=0.01, ║∇J║=1.1e+01
+-----On 1/20 Initial Guess Perturbations
+err 7.09431746910294e-05
+Iteration 8/1-----
+J=3.6e-02, Jf=4.8e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[63.8, 208.0, 53.7, 9.8], ∫ϰ²/L=[48.4, 123.9, 32.8, 9.0], C-C-Sep=0.01, ║∇J║=1.1e+01
+-----On 1/20 Initial Guess Perturbations
+Iteration 9/1-----
+J=3.6e-02, Jf=4.8e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[63.9, 207.9, 53.7, 9.8], ∫ϰ²/L=[48.4, 123.9, 32.8, 9.0], C-C-Sep=0.01, ║∇J║=1.1e+01
+-----On 1/20 Initial Guess Perturbations
+err 7.020350502318085e-07
+Iteration 10/1-----
+J=3.6e-02, Jf=4.8e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[63.8, 208.0, 53.7, 9.8], ∫ϰ²/L=[48.4, 123.9, 32.8, 9.0], C-C-Sep=0.01, ║∇J║=1.1e+01
+-----On 1/20 Initial Guess Perturbations
+Iteration 11/1-----
+J=3.6e-02, Jf=4.8e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[63.8, 208.0, 53.7, 9.8], ∫ϰ²/L=[48.4, 123.9, 32.8, 9.0], C-C-Sep=0.01, ║∇J║=1.1e+01
+-----On 1/20 Initial Guess Perturbations
+err 7.077070179883904e-09
+
+################################################################################
+### Run the optimisation #######################################################
+################################################################################
+
+Iteration 1/1-----
+J=3.6e-02, Jf=4.8e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[63.8, 208.0, 53.7, 9.8], ∫ϰ²/L=[48.4, 123.9, 32.8, 9.0], C-C-Sep=0.01, ║∇J║=1.1e+01
+-----On 1/20 Initial Guess Perturbations
+Iteration 2/1-----
+J=4.4e+01, Jf=7.9e-04, ⟨B·n⟩=3.1e-03, Len=sum([4.7, 49.1, 3.8, 3.8])=61.3, ϰ=[715.9, 54.7, 405.2, 52.9], ∫ϰ²/L=[1020.3, 40.4, 449.2, 41.4], C-C-Sep=0.01, ║∇J║=4.7e+02
+-----On 1/20 Initial Guess Perturbations
+Iteration 3/1-----
+J=5.4e-01, Jf=2.5e-07, ⟨B·n⟩=5.4e-05, Len=sum([3.5, 5.7, 3.2, 3.7])=16.0, ϰ=[60.4, 396.8, 55.0, 10.0], ∫ϰ²/L=[59.0, 660.4, 42.8, 9.6], C-C-Sep=0.01, ║∇J║=1.2e+02
+-----On 1/20 Initial Guess Perturbations
+Iteration 4/1-----
+J=2.5e-01, Jf=4.7e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.4, 3.2, 3.7])=13.8, ϰ=[34.5, 853.0, 33.3, 9.9], ∫ϰ²/L=[42.6, 657.7, 29.8, 9.1], C-C-Sep=0.01, ║∇J║=9.0e+02
+-----On 1/20 Initial Guess Perturbations
+Iteration 5/1-----
+J=3.2e-02, Jf=4.8e-07, ⟨B·n⟩=7.4e-05, Len=sum([3.4, 3.2, 3.2, 3.7])=13.5, ϰ=[62.0, 105.2, 52.5, 9.8], ∫ϰ²/L=[47.9, 82.1, 32.6, 9.0], C-C-Sep=0.01, ║∇J║=2.5e+00
+-----On 1/20 Initial Guess Perturbations
+-----------------Base current: []
+-----------------Base current: [100000.]
+-----------------Base current: [100000.]
+-----------------Base current: [100000.]
+Finished 1/10 Out-of-Sample Evaluations
+Finished 2/10 Out-of-Sample Evaluations
+Finished 3/10 Out-of-Sample Evaluations
+Finished 4/10 Out-of-Sample Evaluations
+Finished 5/10 Out-of-Sample Evaluations
+Finished 6/10 Out-of-Sample Evaluations
+Finished 7/10 Out-of-Sample Evaluations
+Finished 8/10 Out-of-Sample Evaluations
+Finished 9/10 Out-of-Sample Evaluations
+Finished 10/10 Out-of-Sample Evaluations
+Flux Objective for exact coils coils      : 4.765e-07
+Out-of-sample flux value                  : 4.772e-07
+Objective Gradient (||∇J||)              : 2.471e+00
+Took 12.75213098526001s
