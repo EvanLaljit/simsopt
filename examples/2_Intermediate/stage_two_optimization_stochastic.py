@@ -56,11 +56,11 @@ SIGMA_INITIAL_GUESS = 1e-2*0 # Standard deviation for the initial guess perturba
 L_INITIAL_GUESS = 0.15 # Length scale for the initial guess perturbation
 
 # Number of samples to approximate the mean
-N_SAMPLES = 50
+N_SAMPLES = 4
 
 #save pairs of sigma and L values to test for perturbing coils
-sigma_values = np.linspace(1e-3,3.5e-2,8)
-L_values = np.linspace(0.4,1.5,4)
+sigma_values = np.linspace(1e-3,3.5e-2,2)
+L_values = np.linspace(0.4,1.5,2)
 sigma_and_L = [(sigma, L) for sigma in sigma_values for L in L_values]
 
 # Standard deviation for the coil errors
@@ -363,7 +363,7 @@ def fun(dofs):
     outstr += f", ║∇J║={np.linalg.norm(grad):.1e}"
     outstr += f"\n-----On {(slurm_array_int+1)}/{N_INITIAL_GUESS_PERTURBATIONS} Initial Guess Perturbations"
     
-    proc0_print(outstr, flush=True)
+    #proc0_print(outstr, flush=True)
     return J, grad
 
 proc0_print("""
