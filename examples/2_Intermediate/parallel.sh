@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=4:00:00
+#SBATCH --time=36:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=48000
 #SBATCH --ntasks-per-node=1
@@ -7,7 +7,7 @@
 #SBATCH --array=0-19
 #SBATCH --output=/scratch/projects/kaptanoglulab/EL/simsopt/examples/2_Intermediate/slurm_outputs/slurm-%A_%a.out
 #SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=egl5916@nyu.edu   # replace with your actual email
+#SBATCH --mail-user=egl5916@nyu.edu   
 
 cd $SLURM_SUBMIT_DIR
 # Submit an array of N jobs. 
@@ -18,5 +18,6 @@ export MKL_NUM_THREADS=1  # number of threads for Intel MKL
 
 # Make Python flush prints immediately
 export PYTHONUNBUFFERED=1
-/scratch/projects/kaptanoglulab/EL/run-simsopt.bash python stage_two_optimization.py  
 
+#run file with activated environment first
+/scratch/projects/kaptanoglulab/EL/run-simsopt.bash python stage_two_optimization.py

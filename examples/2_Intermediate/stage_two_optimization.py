@@ -39,33 +39,51 @@ import seaborn as sns
 from simsopt.util.famus_helpers import FocusPlasmaBnormal
 import matplotlib.pyplot as plt
 
-# Each SLURM array job will process one initial guess perturbation
-j = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
-print(f"Running initial guess perturbation {j}")
-
 
 start_time = time.time()
+
+# Each SLURM array job will process one initial guess perturbation
+slurm_array_int = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
+print(f"Running initial guess perturbation {slurm_array_int}")
+
 
 # Number of Fourier modes describing each Cartesian component of each coil:
 order = 24
 
-# Standard deviation for the coil errors
-SIGMA = 1e-2
-
-# Length scale for the coil errors
-L = 0.5
+# Number of times to perturb initial guess and run optimization for each
+N_INITIAL_GUESS_PERTURBATIONS = 20
+SIGMA_INITIAL_GUESS = 1e-2*0 # Standard deviation for the initial guess perturbation
+L_INITIAL_GUESS = 0.15 # Length scale for the initial guess perturbation
 
 # Number of samples for out-of-sample evaluation
 N_OOS = 1000
 
-# Number of times to perturb initial guess and run optimization for each
-N_INITIAL_GUESS_PERTURBATIONS = 20
-SIGMA_INITIAL_GUESS = 2e-2 # Standard deviation for the initial guess perturbation
-L_INITIAL_GUESS = 0.15 # Length scale for the initial guess perturbation
+#save pairs of sigma and L values to test for perturbing coils
+sigma_values = np.linspace(1e-3, 3.5e-2,8)
+L_values = np.linspace(0.4, 1.5,4)
+sigma_and_L = [(sigma, L) for sigma in sigma_values for L in L_values]
+
+# Standard deviation for the coil errors
+# Length scale for the coil errors
+SIGMA_OOS, L_OOS = sigma_and_L[slurm_array_int]
+
+if SIGMA_INITIAL_GUESS != 0:
+    SIGMA_OOS, L_OOS = 1e-2, 0.5
 
 # Choose and load input parameters from configuration
-CONFIG_NAME = "QH"   # or "NCSX"
+CONFIG_NAME = "QA" 
 
+# use fourier fitting
+fourier_fit = False
+
+# Number of iterations to perform:
+MAXITER = 50 if in_github_actions else 1000
+
+#######################################################
+# End of input parameters.
+#######################################################
+
+#load configuration
 with open("input_parameters.json") as f:
     all_configs = json.load(f)
 
@@ -74,26 +92,46 @@ config = all_configs[CONFIG_NAME]
 # Assign all keys as variables
 globals().update(config)
 
-# use fourier fitting
-fourier_fit = False
-
-# Number of iterations to perform:
-MAXITER = 50 if in_github_actions else 1000
-
 # Write input parameters to file
-info_txt = f"L init guess: {L_INITIAL_GUESS}, L for perturbing optimized coils = {L}\n" \
-    + f"SIGMA init guess: {SIGMA_INITIAL_GUESS}, SIGMA for perturbing optimized coils = {SIGMA}" \
+info_txt = f"L init guess: {L_INITIAL_GUESS}, L for perturbing optimized coils = {L_OOS}\n" \
+    + f"SIGMA init guess: {SIGMA_INITIAL_GUESS}, SIGMA for perturbing optimized coils = {SIGMA_OOS}" \
 
-# Seed for initial guess perturbation
-seed_initial_guess = 0
+#specify what to label results for each run
+#currently being saved and labeled:
+#initial curves, perturbed initial curves, initial coils, 
+#base curves optimized, coils optimized, 
+loop_label = slurm_array_int
+#label for numerical data, like arrays or floats
+#unperturbed sq flux, gradient, perturbed sq flux distribution
+loop_numerical_data_label = slurm_array_int
 
 # File for the desired boundary magnetic surface:
+
 TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolve()
 filename = TEST_DIR / config["surface_filename"]
 
 # Directory for output
-OUT_DIR = Path(f"output_stage_two_optimization_{CONFIG_NAME}")
+out_dir_path = f"output_stage_two_optimization_{CONFIG_NAME}_LW_{LENGTH_WEIGHT}_CCDW_{CC_WEIGHT}"
+if fourier_fit == True:
+    out_dir_path += "_ffit"
+    
+if SIGMA_INITIAL_GUESS == 0:
+    out_dir_path += "_original_3.5cm_sigma_max"
+elif SIGMA_INITIAL_GUESS != 0:
+    out_dir_path += "_pert_init"
+    
+if CS_WEIGHT == 0:
+    out_dir_path += "_CS_WEIGHT_0"
+    
+if MAXITER != 1000:
+    out_dir_path += f"_{MAXITER/1000}kiter"
+    
+OUT_DIR = Path(out_dir_path)
 OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+#save sigma and L values used, for plotting 
+# np.save(OUT_DIR / f"Sigma_{slurm_array_int}",SIGMA)
+# np.save(OUT_DIR / f"L_{slurm_array_int}",L)
 
 # Create the subdirectory
 SUB_DIR = OUT_DIR / "Non-VTK_Data"
@@ -123,9 +161,6 @@ s_plot = surface_constructor(
     quadpoints_theta=quadpoints_theta
 )
 
-#######################################################
-# End of input parameters.
-#######################################################
 
 #write input parameters to file
 with open(SUB_DIR / 'input_parameters.txt', 'w') as f:
@@ -133,7 +168,7 @@ with open(SUB_DIR / 'input_parameters.txt', 'w') as f:
  
 #for loop over initial guess perturbation
 
-seed_initial_guess = j
+seed_initial_guess = slurm_array_int
 
 # Create the initial coils:
 
@@ -146,7 +181,7 @@ sampler_initial_guess = GaussianSampler(base_curves_init[0].quadpoints, SIGMA_IN
 base_curves_pert = [CurvePerturbed(c, PerturbationSample(sampler_initial_guess, randomgen=rg_initial_guess)) for c in base_curves_init]
 
 # show initial base coil after perturbation
-curves_to_vtk(base_curves_pert, OUT_DIR / f"base_curves_init_perturbed_{j}")
+curves_to_vtk(base_curves_pert, OUT_DIR / f"base_curves_init_perturbed_{loop_label}")
 
 
 #take x,y,z coordinates from perturbed coil and fit fourier
@@ -174,7 +209,7 @@ if fourier_fit == True:
         base_curves_fit[c].x = coeffs_for_all_coords
 
     # Plot base curves obtained from fitted coefficients
-    curves_to_vtk(base_curves_fit, OUT_DIR / f"base_curves_init_fit{j}")
+    curves_to_vtk(base_curves_fit, OUT_DIR / f"base_curves_init_fit{loop_label}")
     #print rms error
     # More detailed error analysis
     fit_error = []
@@ -212,6 +247,8 @@ if fourier_fit == True:
 
     print(f"Overall fit errors: {fit_error}")
     print(f"Mean fit error: {np.mean(fit_error):.6f}")
+    with open(SUB_DIR / 'fit_errors.txt', 'w') as f:
+            f.write(f"{np.mean(fit_error)}")
     # define base_curves to be the fitted or not
     base_curves = base_curves_fit
 elif fourier_fit == False:
@@ -227,11 +264,11 @@ coils = coils_via_symmetries(base_curves, base_currents, s.nfp, True)
 bs = BiotSavart(coils)
 
 curves = [c.curve for c in coils]
-curves_to_vtk(curves, OUT_DIR / f"curves_init_{j}") 
+curves_to_vtk(curves, OUT_DIR / f"curves_init_{loop_label}") 
 
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 pointData = {"B_N": np.sum(bs.B().reshape((qphi, qtheta, 3)) * s_plot.unitnormal(), axis=2)[:, :, None]}
-s_plot.to_vtk(OUT_DIR / f"surf_init_{j}", extra_data=pointData)
+s_plot.to_vtk(OUT_DIR / f"surf_init_{loop_label}", extra_data=pointData)
 bs.set_points(s.gamma().reshape((-1, 3)))
 
 # Define the individual terms objective function:
@@ -276,7 +313,7 @@ def fun(dofs):
     outstr += f", Len=sum([{cl_string}])={sum(J.J() for J in Jls):.1f}, ϰ=[{kap_string}], ∫ϰ²/L=[{msc_string}]"
     outstr += f", C-C-Sep={Jccdist.shortest_distance():.2f}"
     outstr += f", ║∇J║={np.linalg.norm(grad):.1e}"
-    outstr += f"\n-----On {(j+1)}/{N_INITIAL_GUESS_PERTURBATIONS} Initial Guess Perturbations"
+    outstr += f"\n-----On {(slurm_array_int+1)}/{N_INITIAL_GUESS_PERTURBATIONS} Initial Guess Perturbations"
     print(outstr)
     return J, grad
 
@@ -312,10 +349,10 @@ res = minimize(fun, dofs, jac=True, method='L-BFGS-B', options={'maxiter': MAXIT
 for c in base_currents:
     print(f"-----------------Base current: {c.x}")
     
-curves_to_vtk(curves, OUT_DIR / f"curves_opt_{j}")
+curves_to_vtk(curves, OUT_DIR / f"curves_opt_{loop_label}")
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 pointData = {"B_N": np.sum(bs.B().reshape((qphi, qtheta, 3)) * s_plot.unitnormal(), axis=2)[:, :, None]}
-s_plot.to_vtk(OUT_DIR / f"surf_opt_{j}", extra_data=pointData)
+s_plot.to_vtk(OUT_DIR / f"surf_opt_{loop_label}", extra_data=pointData)
 bs.set_points(s.gamma().reshape((-1, 3)))
 
 # We now use the result from the optimization as the initial guess for a
@@ -330,7 +367,7 @@ bs.set_points(s.gamma().reshape((-1, 3)))
 # s_plot.to_vtk(OUT_DIR / f"surf_opt_long_{j}", extra_data=pointData)
 
 bs.set_points(s.gamma().reshape((-1, 3)))
-curves_to_vtk(base_curves, OUT_DIR / f"base_curves_opt_{j}")
+curves_to_vtk(base_curves, OUT_DIR / f"base_curves_opt_{loop_label}")
 # Save the optimized coil shapes and currents so they can be loaded into other scripts for analysis:
 # bs.save(OUT_DIR / "biot_savart_opt.json")
 sq_flux_unperturbed = Jf.J()
@@ -341,7 +378,7 @@ curves_pert = []
 squared_flux_data = []
 curves_pert_oos = []
 rg = Generator(PCG64DXSM(seed+1))
-sampler = GaussianSampler(curves[0].quadpoints, SIGMA, L, n_derivs=1)
+sampler = GaussianSampler(curves[0].quadpoints, SIGMA_OOS, L_OOS, n_derivs=1)
 for i in range(N_OOS):
     # first add the 'systematic' error. this error is applied to the base curves and hence the various symmetries are applied to it.
     base_curves_perturbed = [CurvePerturbed(c, PerturbationSample(sampler, randomgen=rg)) for c in base_curves]
@@ -353,9 +390,9 @@ for i in range(N_OOS):
     bs_pert.set_points(s.gamma().reshape((-1, 3)))
     squared_flux_data.append(SquaredFlux(s, bs_pert).J())
     #only save first 15 samples, for first initial guess
-    if j==0 and i<15: 
+    if slurm_array_int==0 and i<15: 
         curves_pert_oos.append([c.curve for c in coils_pert])
-        curves_to_vtk(curves_pert_oos[i], OUT_DIR / f"curves_pert_oos_{j}_sample_{i}")
+        curves_to_vtk(curves_pert_oos[i], OUT_DIR / f"curves_pert_oos_{loop_label}_sample_{i}")
     #print progress
     if (i+1) % (N_OOS/10) == 0:
         print(f"Finished {i+1}/{N_OOS} Out-of-Sample Evaluations")
@@ -364,9 +401,9 @@ print(f"Flux Objective for exact coils coils      : {sq_flux_unperturbed:.3e}")
 print(f"Out-of-sample flux value                  : {np.mean(squared_flux_data):.3e}")
 print(f"Objective Gradient (||∇J||)              : {np.linalg.norm(JF.dJ()):.3e}")
 
-np.save(OUT_DIR / f"perturbed_sq_flux_data_{j}",squared_flux_data)
-np.save(OUT_DIR / f"sq_flux_value_{j}",Jf.J())
-np.save(OUT_DIR / f"gradient_{j}",np.linalg.norm(JF.dJ()))
+np.save(OUT_DIR / f"perturbed_sq_flux_data_{loop_numerical_data_label}",squared_flux_data)
+np.save(OUT_DIR / f"sq_flux_value_{loop_numerical_data_label}",Jf.J())
+np.save(OUT_DIR / f"gradient_{loop_numerical_data_label}",np.linalg.norm(JF.dJ()))
 
 # import subprocess
 # if j==(N_INITIAL_GUESS_PERTURBATIONS-1):
