@@ -32,49 +32,54 @@ from simsopt.field import BiotSavart, Current, Coil, coils_via_symmetries
 from simsopt.geo import (SurfaceRZFourier, curves_to_vtk, create_equally_spaced_curves,
                          CurveLength, CurveCurveDistance, MeanSquaredCurvature,
                          LpCurveCurvature, CurveSurfaceDistance, ArclengthVariation,
-                         GaussianSampler, CurvePerturbed, PerturbationSample)
+                         GaussianSampler, CurvePerturbed, PerturbationSample, LinkingNumber)
 from simsopt.objectives import Weight, SquaredFlux, QuadraticPenalty
-from simsopt.util import in_github_actions
-import seaborn as sns
-from simsopt.util.famus_helpers import FocusPlasmaBnormal
-import matplotlib.pyplot as plt
+from simsopt.util import in_github_actions, curve_fourier_fit
 
 
-start_time = time.time()
+start = time.time()
 
 # Each SLURM array job will process one initial guess perturbation
 slurm_array_int = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
-print(f"Running initial guess perturbation {slurm_array_int}")
+
 
 
 # Number of Fourier modes describing each Cartesian component of each coil:
 order = 24
 
-# Number of times to perturb initial guess and run optimization for each
-N_INITIAL_GUESS_PERTURBATIONS = 20
-SIGMA_INITIAL_GUESS = 1e-2*0 # Standard deviation for the initial guess perturbation
-L_INITIAL_GUESS = 0.15 # Length scale for the initial guess perturbation
-
 # Number of samples for out-of-sample evaluation
 N_OOS = 1000
 
-#save pairs of sigma and L values to test for perturbing coils
-sigma_values = np.linspace(1e-3, 3.5e-2,8)
-L_values = np.linspace(0.4, 1.5,4)
-sigma_and_L = [(sigma, L) for sigma in sigma_values for L in L_values]
-
 # Standard deviation for the coil errors
 # Length scale for the coil errors
-SIGMA_OOS, L_OOS = sigma_and_L[slurm_array_int]
-
-if SIGMA_INITIAL_GUESS != 0:
-    SIGMA_OOS, L_OOS = 1e-2, 0.5
+SIGMA_OOS, L_OOS = 1e-2, 0.5
 
 # Choose and load input parameters from configuration
 CONFIG_NAME = "QA" 
 
-# use fourier fitting
-fourier_fit = False
+RUN_MODE = 'order_scan'
+
+if RUN_MODE == 'pert_init':
+    # Initial guess perturbation parameters
+    SIGMA_INITIAL_GUESS = 1e-2 # Standard deviation for the initial guess perturbation
+    L_INITIAL_GUESS = 0.15 # Length scale for the initial guess perturbation
+    fourier_fit = False #use curves with perturbed fourier coefficients
+    loop_label = slurm_array_int #specify what to label results for each run
+    
+elif RUN_MODE == 'sigma_l_scan':
+    #scan sigma and L values for optimization
+    sigma_values = np.linspace(1e-3, 1e-2, 8) #sigma values to scan
+    L_values = np.linspace(0.5, 1.0, 4) #L values to scan
+    sigma_and_L = [(sigma, L) for sigma in sigma_values for L in L_values] #pairs of sigma and L
+    SIGMA_OOS, L_OOS = sigma_and_L[slurm_array_int] #assign sigma and L using slurm array number
+    loop_label = slurm_array_int #specify what to label results for each run
+    
+elif RUN_MODE == 'order_scan':
+    order_values = [int(i) for i in range(5,85,10)]
+    order = order_values[slurm_array_int]
+    loop_label = f"order_{order}"
+else:
+    exit()
 
 # Number of iterations to perform:
 MAXITER = 50 if in_github_actions else 1000
@@ -86,21 +91,19 @@ MAXITER = 50 if in_github_actions else 1000
 #load configuration
 with open("input_parameters.json") as f:
     all_configs = json.load(f)
-
 config = all_configs[CONFIG_NAME]
-
-# Assign all keys as variables
-globals().update(config)
+globals().update(config)  # Assign all keys as variables
 
 # Write input parameters to file
-info_txt = f"L init guess: {L_INITIAL_GUESS}, L for perturbing optimized coils = {L_OOS}\n" \
-    + f"SIGMA init guess: {SIGMA_INITIAL_GUESS}, SIGMA for perturbing optimized coils = {SIGMA_OOS}" \
+# Just specify the variable names you want
+save_vars = ['SIGMA_OOS', 'L_OOS', 'MAXITER'
+             ]
 
 #specify what to label results for each run
 #currently being saved and labeled:
 #initial curves, perturbed initial curves, initial coils, 
 #base curves optimized, coils optimized, 
-loop_label = slurm_array_int
+
 #label for numerical data, like arrays or floats
 #unperturbed sq flux, gradient, perturbed sq flux distribution
 loop_numerical_data_label = slurm_array_int
@@ -111,17 +114,11 @@ TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolv
 filename = TEST_DIR / config["surface_filename"]
 
 # Directory for output
-out_dir_path = f"output_stage_two_optimization_{CONFIG_NAME}_LW_{LENGTH_WEIGHT}_CCDW_{CC_WEIGHT}"
-if fourier_fit == True:
-    out_dir_path += "_ffit"
-    
-if SIGMA_INITIAL_GUESS == 0:
-    out_dir_path += "_original_3.5cm_sigma_max"
-elif SIGMA_INITIAL_GUESS != 0:
-    out_dir_path += "_pert_init"
-    
-if CS_WEIGHT == 0:
-    out_dir_path += "_CS_WEIGHT_0"
+out_dir_path = f"output_stage_two_optimization_{CONFIG_NAME}_{RUN_MODE}"
+
+if RUN_MODE == 'pert_init_guess':
+    if fourier_fit == True:
+        out_dir_path += "_ffit"
     
 if MAXITER != 1000:
     out_dir_path += f"_{MAXITER/1000}kiter"
@@ -129,17 +126,38 @@ if MAXITER != 1000:
 OUT_DIR = Path(out_dir_path)
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-#save sigma and L values used, for plotting 
-# np.save(OUT_DIR / f"Sigma_{slurm_array_int}",SIGMA)
-# np.save(OUT_DIR / f"L_{slurm_array_int}",L)
+#save appropriate array
+if RUN_MODE == 'sigma_l_scan':
+    np.save(OUT_DIR / "sigma_and_L", sigma_and_L)
+    np.save(OUT_DIR / "L_values", L_values)
+elif RUN_MODE == 'order_scan':
+    np.save(OUT_DIR / "order_values", order_values)
 
 # Create the subdirectory
 SUB_DIR = OUT_DIR / "Non-VTK_Data"
 SUB_DIR.mkdir(parents=True, exist_ok=True)
 
+#write input parameters to file
+# Get variables from your script
+script_params = {name: eval(name) for name in save_vars if name in locals() or name in globals()}
+
+# Get variables from JSON config
+json_params = {k: v for k, v in config.items()}
+
+# Combine both
+params = {
+    'script_variables': script_params,
+    'json_variables': json_params,
+}
+
+with open(SUB_DIR / 'input_parameters.json', 'w') as f:
+    json.dump(params, f, indent=1)
+    
+
 # Initialize the boundary magnetic surface:
 nphi = 64
 ntheta = 16
+
 # Pick the correct constructor dynamically
 surface_constructor = getattr(SurfaceRZFourier, config["surface_method"])
 
@@ -161,98 +179,32 @@ s_plot = surface_constructor(
     quadpoints_theta=quadpoints_theta
 )
 
-
-#write input parameters to file
-with open(SUB_DIR / 'input_parameters.txt', 'w') as f:
-            f.write(info_txt)
- 
-#for loop over initial guess perturbation
-
-seed_initial_guess = slurm_array_int
-
 # Create the initial coils:
-
 base_curves_init = create_equally_spaced_curves(ncoils, s.nfp, stellsym=True, R0=R0, R1=R1, order=order)
 curves_to_vtk(base_curves_init, OUT_DIR / f"base_curves_init")
     
 # Perturb coils
-rg_initial_guess = Generator(PCG64DXSM(seed_initial_guess))
-sampler_initial_guess = GaussianSampler(base_curves_init[0].quadpoints, SIGMA_INITIAL_GUESS, L_INITIAL_GUESS, n_derivs=2)
-base_curves_pert = [CurvePerturbed(c, PerturbationSample(sampler_initial_guess, randomgen=rg_initial_guess)) for c in base_curves_init]
+if RUN_MODE == "pert_init_guess":
+    
+    seed_initial_guess = slurm_array_int
+    rg_initial_guess = Generator(PCG64DXSM(seed_initial_guess))
+    sampler_initial_guess = GaussianSampler(base_curves_init[0].quadpoints, SIGMA_INITIAL_GUESS, L_INITIAL_GUESS, n_derivs=2)
+    base_curves_pert = [CurvePerturbed(c, PerturbationSample(sampler_initial_guess, randomgen=rg_initial_guess)) for c in base_curves_init]
 
-# show initial base coil after perturbation
-curves_to_vtk(base_curves_pert, OUT_DIR / f"base_curves_init_perturbed_{loop_label}")
+    # show initial base coil after perturbation
+    curves_to_vtk(base_curves_pert, OUT_DIR / f"base_curves_init_perturbed_{loop_label}")
 
-
-#take x,y,z coordinates from perturbed coil and fit fourier
-if fourier_fit == True: 
-
-    base_curves_fit = create_equally_spaced_curves(ncoils, s.nfp, stellsym=True, R0=R0, R1=R1, order=order)
-
-    theta = np.array(base_curves_fit[0].quadpoints)  # This gives you 0 to 1 (not 0 to 2π)
-    for c in range(ncoils):
-        #for each coordinate, find coefficients
-        coeffs_for_all_coords = []
-        for coordinate in range(3):
-            x = base_curves_pert[c].gamma()[:,coordinate]
-            # x = np.append(x,x[0]) #enforce periodicity for lstsq solver
-            basis = []
-            for m in range(order+1):
-                if m == 0:
-                    basis.append(np.ones_like(theta))  # Constant term (m=0)
-                else:
-                    basis.append(np.sin(2*np.pi*m*theta))  # sin(2π*m*phi) 
-                    basis.append(np.cos(2*np.pi*m*theta))  # cos(2π*m*phi)
-            A = np.column_stack(basis)
-            coeffs, _, _, _ = np.linalg.lstsq(A, x, rcond=None)
-            coeffs_for_all_coords = np.append(coeffs_for_all_coords,coeffs)
-        base_curves_fit[c].x = coeffs_for_all_coords
-
-    # Plot base curves obtained from fitted coefficients
-    curves_to_vtk(base_curves_fit, OUT_DIR / f"base_curves_init_fit{loop_label}")
-    #print rms error
-    # More detailed error analysis
-    fit_error = []
-    for c in range(ncoils):
-        original_points = base_curves_pert[c].gamma()
-        fitted_points = base_curves_fit[c].gamma()
+    #fit fourier
+    if fourier_fit == True: 
+        base_curves, error = curve_fourier_fit(base_curves_pert, s, order)
         
-        # Interpolate fitted curve to match original points for fair comparison
-        from scipy.interpolate import interp1d
+    else:
+        base_curves = base_curves_pert
         
-        # Create parameterization for fitted curve
-        theta_fitted = np.linspace(0, 2*np.pi, fitted_points.shape[0], endpoint=False)
-        
-        # Interpolate each coordinate
-        fitted_interp = []
-        for coord in range(3):
-            f_interp = interp1d(theta_fitted, fitted_points[:, coord], kind='cubic', assume_sorted=True)
-            theta_original = np.linspace(0, 2*np.pi, original_points.shape[0], endpoint=False)
-            fitted_interp.append(f_interp(theta_original))
-        
-        fitted_interp = np.column_stack(fitted_interp)
-        
-        # Now calculate error with same number of points
-        point_errors = np.sqrt(np.sum((original_points - fitted_interp)**2, axis=1))
-        rms_error = np.sqrt(np.mean(point_errors**2))
-        
-        # Relative error
-        curve_size = np.max(np.linalg.norm(original_points, axis=1)) - np.min(np.linalg.norm(original_points, axis=1))
-        relative_error = rms_error / curve_size
-        
-        fit_error.append(rms_error)
-        
-        print(f"Coil {c}: RMS error: {rms_error:.6f}, Relative: {relative_error:.6f}")
-        print(f"Max point error: {np.max(point_errors):.6f}, Min point error: {np.min(point_errors):.6f}")
-
-    print(f"Overall fit errors: {fit_error}")
-    print(f"Mean fit error: {np.mean(fit_error):.6f}")
-    with open(SUB_DIR / 'fit_errors.txt', 'w') as f:
-            f.write(f"{np.mean(fit_error)}")
-    # define base_curves to be the fitted or not
-    base_curves = base_curves_fit
-elif fourier_fit == False:
-    base_curves = base_curves_pert
+    curves_to_vtk(base_curves, OUT_DIR / f"base_curves_init_pert_{loop_label}")
+    
+else:
+    base_curves = base_curves_init
 
 base_currents = [Current(1e5) for i in range(ncoils)]
 # Since the target field is zero, one possible solution is just to set all
@@ -279,7 +231,7 @@ Jcsdist = CurveSurfaceDistance(curves, s, CS_THRESHOLD)
 Jcs = [LpCurveCurvature(c, 2, CURVATURE_THRESHOLD) for c in base_curves]
 Jmscs = [MeanSquaredCurvature(c) for c in base_curves]
 Jals = [ArclengthVariation(c) for c in base_curves]
-
+linknum = LinkingNumber(curves)
 # Form the total objective function. To do this, we can exploit the
 # fact that Optimizable objects with J() and dJ() functions can be
 # multiplied by scalars and added:
@@ -291,7 +243,7 @@ JF = Jf \
     + MSC_WEIGHT * sum(QuadraticPenalty(J, MSC_THRESHOLD, "max") for J in Jmscs) \
     + ARCLENGTH_WEIGHT * sum(Jals) \
     + CS_WEIGHT * Jcsdist \
-    
+    + linknum
 # We don't have a general interface in SIMSOPT for optimisation problems that
 # are not in least-squares form, so we write a little wrapper function that we
 # pass directly to scipy.optimize.minimize
@@ -313,8 +265,7 @@ def fun(dofs):
     outstr += f", Len=sum([{cl_string}])={sum(J.J() for J in Jls):.1f}, ϰ=[{kap_string}], ∫ϰ²/L=[{msc_string}]"
     outstr += f", C-C-Sep={Jccdist.shortest_distance():.2f}"
     outstr += f", ║∇J║={np.linalg.norm(grad):.1e}"
-    outstr += f"\n-----On {(slurm_array_int+1)}/{N_INITIAL_GUESS_PERTURBATIONS} Initial Guess Perturbations"
-    print(outstr)
+    #print(outstr)
     return J, grad
 
 
@@ -369,7 +320,7 @@ bs.set_points(s.gamma().reshape((-1, 3)))
 bs.set_points(s.gamma().reshape((-1, 3)))
 curves_to_vtk(base_curves, OUT_DIR / f"base_curves_opt_{loop_label}")
 # Save the optimized coil shapes and currents so they can be loaded into other scripts for analysis:
-# bs.save(OUT_DIR / "biot_savart_opt.json")
+bs.save(OUT_DIR / "biot_savart_opt.json")
 sq_flux_unperturbed = Jf.J()
 
 #Perturb coils
@@ -405,9 +356,11 @@ np.save(OUT_DIR / f"perturbed_sq_flux_data_{loop_numerical_data_label}",squared_
 np.save(OUT_DIR / f"sq_flux_value_{loop_numerical_data_label}",Jf.J())
 np.save(OUT_DIR / f"gradient_{loop_numerical_data_label}",np.linalg.norm(JF.dJ()))
 
-# import subprocess
-# if j==(N_INITIAL_GUESS_PERTURBATIONS-1):
-#     subprocess.run(["python", "post_process.py", OUT_DIR, SUB_DIR, str(N_INITIAL_GUESS_PERTURBATIONS)])
 
-end_time = time.time()
-print(f"Took {end_time-start_time}s")
+end = time.time()
+time_taken = f"Took {(end - start):.2f} for run {loop_label}."
+
+with open(SUB_DIR / 'run_times.txt', 'w') as f:
+            f.write(time_taken)
+            
+print(f"Took {end-start}s")
