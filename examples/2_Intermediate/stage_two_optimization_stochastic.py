@@ -55,14 +55,14 @@ slurm_array_int = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
 order = 24
 
 # Number of samples to approximate the mean
-N_SAMPLES = 4
+N_SAMPLES = 50
 
 # Standard deviation for the coil errors
 # Length scale for the coil errors
 SIGMA, L = 1e-2, 0.5
 
 # Pick which configuration you want
-CONFIG_NAME = "QA" 
+CONFIG_NAME = "NCSX" 
 
 RUN_MODE = 'order_scan'
 
@@ -72,19 +72,33 @@ if RUN_MODE == 'pert_init':
     L_INITIAL_GUESS = 0.15 # Length scale for the initial guess perturbation
     fourier_fit = False #use curves with perturbed fourier coefficients
     loop_label = slurm_array_int #specify what to label results for each run
+    save_param = [i for i in range(20)] #relevant parameters to save correspond with saved data
     
 elif RUN_MODE == 'sigma_l_scan':
     #scan sigma and L values for optimization
     sigma_values = np.linspace(1e-3, 1e-2, 8) #sigma values to scan
     L_values = np.linspace(0.5, 1.0, 4) #L values to scan
     sigma_and_L = [(sigma, L) for sigma in sigma_values for L in L_values] #pairs of sigma and L
-    SIGMA, L = sigma_and_L[slurm_array_int] #assign sigma and L using slurm array number
+    SIGMA, L= sigma_and_L[slurm_array_int] #assign sigma and L using slurm array number
     loop_label = f"Sigma={SIGMA:.3f};L={L:.3f}" #specify what to label results for each run
+    save_param = (SIGMA,L) #relevant parameters to save correspond with saved data
+    print(loop_label)
+    if slurm_array_int >= len(sigma_and_L):
+        raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(sigma_and_L)} orders")
     
 elif RUN_MODE == 'order_scan':
-    order_values = [int(i) for i in range(5,85,10)]
+    order_values = [int(i) for i in range(4,36,4)]
     order = order_values[slurm_array_int]
-    loop_label = f"order_{order}"
+    loop_label = f"order={order}"
+    save_param = order #relevant parameters to save correspond with saved data
+    print(loop_label)
+    if slurm_array_int >= len(order_values):
+        raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(order_values)} orders")
+elif RUN_MODE == 'normal':
+    print("Running normal mode")
+    loop_label = ""
+    save_param = 0
+    
 else:
     exit()
     
@@ -128,10 +142,11 @@ TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolv
 surf_filename = TEST_DIR / config["surface_filename"]
 
 # Directory for output
-out_dir_path = f"output_stage_two_optimization_stochastic_{CONFIG_NAME}_{N_SAMPLES}nsamp_{RUN_MODE}"
+out_dir_path = f"output_stage_two_optimization_stochastic_{CONFIG_NAME}_{N_SAMPLES}nsamp_{RUN_MODE}_"
 
-if fourier_fit == True:
-    out_dir_path += "_ffit"
+if RUN_MODE == 'pert_init':
+    if fourier_fit == True:
+        out_dir_path += "_ffit"
     
 if MAXITER != 2000:
     out_dir_path += f"_{MAXITER/1000}kiter"
@@ -195,7 +210,7 @@ base_curves_init = create_equally_spaced_curves(ncoils, s.nfp, stellsym=True, R0
 curves_to_vtk(base_curves_init, OUT_DIR / f"base_curves_init")
 
 # Perturb coils
-if RUN_MODE == "pert_init_guess":
+if RUN_MODE == "pert_init":
     
     seed_initial_guess = slurm_array_int
     rg_initial_guess = Generator(PCG64DXSM(seed_initial_guess))
@@ -242,7 +257,7 @@ Jcsdist = CurveSurfaceDistance(curves, s, CS_THRESHOLD)
 Jcs = [LpCurveCurvature(c, 2, CURVATURE_THRESHOLD) for c in base_curves]
 Jmscs = [MeanSquaredCurvature(c) for c in base_curves]
 Jals = [ArclengthVariation(c) for c in base_curves]
-linknum = LinkingNumber(curves)
+linkNum = LinkingNumber(curves)
 
 seed = 0
 rg = Generator(PCG64DXSM(seed))
@@ -285,15 +300,19 @@ Jmpi = MPIObjective(Jfs, comm_world, needs_splitting=True)
 # Form the total objective function. To do this, we can exploit the
 # fact that Optimizable objects with J() and dJ() functions can be
 # multiplied by scalars and added:
+#+ LENGTH_WEIGHT * sum(Jls) \
+#+ LENGTH_WEIGHT * sum(QuadraticPenalty(J, LENGTH_THRESHOLD, "max") for J in Jls) \
+    
 JF = Jmpi \
-    + LENGTH_WEIGHT * sum(Jls) \
+    + LENGTH_WEIGHT * QuadraticPenalty(sum(Jls), LENGTH_THRESHOLD, "max") \
     + CC_WEIGHT * Jccdist \
     + CURVATURE_WEIGHT * sum(Jcs) \
     + MSC_WEIGHT * sum(QuadraticPenalty(J, MSC_THRESHOLD, "max") for J in Jmscs) \
     + ARCLENGTH_WEIGHT * sum(Jals) \
     + CS_WEIGHT * Jcsdist \
-    + linknum
+    + linkNum
     
+# 
 # We don't have a general interface in SIMSOPT for optimisation problems that
 # are not in least-squares form, so we write a little wrapper function that we
 # pass directly to scipy.optimize.minimize
@@ -358,10 +377,12 @@ proc0_print("""
 
 curves_to_vtk(curves, OUT_DIR / f"curves_opt_{loop_label}")
 curves_to_vtk(base_curves, OUT_DIR / f"base_curves_opt_{loop_label}")
+bs.save(OUT_DIR / "biot_savart_opt.json")
 
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 pointData = {"B_N": np.sum(bs.B().reshape((qphi, qtheta, 3)) * s_plot.unitnormal(), axis=2)[:, :, None]}
 s_plot.to_vtk(OUT_DIR / f"surf_opt_{loop_label}", extra_data=pointData)
+
 bs.set_points(s.gamma().reshape((-1, 3)))
 Jf.x = res.x
 
@@ -391,9 +412,16 @@ proc0_print(f"Flux Objective for exact coils coils      : {Jf.J():.3e}")
 proc0_print(f"Out-of-sample flux value                  : {np.mean(squared_flux_data):.3e}")
 proc0_print(f"Objective Gradient (||∇J||)              : {np.linalg.norm(JF.dJ()):.3e}")
 
-np.save(OUT_DIR / f"perturbed_sq_flux_data_{loop_numerical_data_label}",squared_flux_data)
-np.save(OUT_DIR / f"sq_flux_value_{loop_numerical_data_label}",Jf.J())
-np.save(OUT_DIR / f"gradient_{loop_numerical_data_label}",np.linalg.norm(JF.dJ()))
+# np.save(OUT_DIR / f"perturbed_sq_flux_data_{loop_numerical_data_label}",squared_flux_data)
+# np.save(OUT_DIR / f"sq_flux_value_{loop_numerical_data_label}",Jf.J())
+# np.save(OUT_DIR / f"gradient_{loop_numerical_data_label}",np.linalg.norm(JF.dJ()))
+
+np.savez(OUT_DIR / f"results_{loop_numerical_data_label}.npz",
+         saved_parameter = save_param,
+         sq_flux_value = Jf.J(),
+         perturbed_sq_flux_data = squared_flux_data,
+         gradient = np.linalg.norm(JF.dJ())
+         )
 
 # Optionally make a QFM and pass it to VMEC
 # This is worthless unless plasma

@@ -42,8 +42,6 @@ start = time.time()
 # Each SLURM array job will process one initial guess perturbation
 slurm_array_int = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
 
-
-
 # Number of Fourier modes describing each Cartesian component of each coil:
 order = 24
 
@@ -55,7 +53,7 @@ N_OOS = 1000
 SIGMA_OOS, L_OOS = 1e-2, 0.5
 
 # Choose and load input parameters from configuration
-CONFIG_NAME = "QA" 
+CONFIG_NAME = "NCSX" 
 
 RUN_MODE = 'order_scan'
 
@@ -65,7 +63,8 @@ if RUN_MODE == 'pert_init':
     L_INITIAL_GUESS = 0.15 # Length scale for the initial guess perturbation
     fourier_fit = False #use curves with perturbed fourier coefficients
     loop_label = slurm_array_int #specify what to label results for each run
-    
+    save_param = [i for i in range(20)] #relevant parameters to save correspond with saved data
+        
 elif RUN_MODE == 'sigma_l_scan':
     #scan sigma and L values for optimization
     sigma_values = np.linspace(1e-3, 1e-2, 8) #sigma values to scan
@@ -73,11 +72,24 @@ elif RUN_MODE == 'sigma_l_scan':
     sigma_and_L = [(sigma, L) for sigma in sigma_values for L in L_values] #pairs of sigma and L
     SIGMA_OOS, L_OOS = sigma_and_L[slurm_array_int] #assign sigma and L using slurm array number
     loop_label = slurm_array_int #specify what to label results for each run
+    save_param = (SIGMA_OOS,L_OOS) #relevant parameters to save correspond with saved data
+    print(loop_label)
+    if slurm_array_int >= len(sigma_and_L):
+        raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(sigma_and_L)} orders")
     
 elif RUN_MODE == 'order_scan':
-    order_values = [int(i) for i in range(5,85,10)]
+    order_values = [int(i) for i in range(4,36,4)]
     order = order_values[slurm_array_int]
-    loop_label = f"order_{order}"
+    loop_label = f"order={order}"
+    save_param = order #relevant parameters to save to correspond with saved data
+    print(loop_label)
+    if slurm_array_int >= len(order_values):
+        raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(order_values)} orders")
+
+elif RUN_MODE == 'normal':
+    print("Running normal mode")
+    loop_label = ""
+    save_param = 0
 else:
     exit()
 
@@ -116,7 +128,7 @@ filename = TEST_DIR / config["surface_filename"]
 # Directory for output
 out_dir_path = f"output_stage_two_optimization_{CONFIG_NAME}_{RUN_MODE}"
 
-if RUN_MODE == 'pert_init_guess':
+if RUN_MODE == 'pert_init':
     if fourier_fit == True:
         out_dir_path += "_ffit"
     
@@ -184,7 +196,7 @@ base_curves_init = create_equally_spaced_curves(ncoils, s.nfp, stellsym=True, R0
 curves_to_vtk(base_curves_init, OUT_DIR / f"base_curves_init")
     
 # Perturb coils
-if RUN_MODE == "pert_init_guess":
+if RUN_MODE == "pert_init":
     
     seed_initial_guess = slurm_array_int
     rg_initial_guess = Generator(PCG64DXSM(seed_initial_guess))
@@ -231,19 +243,24 @@ Jcsdist = CurveSurfaceDistance(curves, s, CS_THRESHOLD)
 Jcs = [LpCurveCurvature(c, 2, CURVATURE_THRESHOLD) for c in base_curves]
 Jmscs = [MeanSquaredCurvature(c) for c in base_curves]
 Jals = [ArclengthVariation(c) for c in base_curves]
-linknum = LinkingNumber(curves)
+linkNum = LinkingNumber(curves)
+
 # Form the total objective function. To do this, we can exploit the
 # fact that Optimizable objects with J() and dJ() functions can be
-# multiplied by scalars and added:
-
+# multiplied by scalars and added:t5
+#+ LENGTH_WEIGHT * sum(Jls) \
+#+ LENGTH_WEIGHT * sum(QuadraticPenalty(J, LENGTH_THRESHOLD, "max") for J in Jls) \
+    
 JF = Jf \
-    + LENGTH_WEIGHT * sum(Jls) \
+    + LENGTH_WEIGHT * QuadraticPenalty(sum(Jls), LENGTH_THRESHOLD, "max") \
     + CC_WEIGHT * Jccdist \
     + CURVATURE_WEIGHT * sum(Jcs) \
     + MSC_WEIGHT * sum(QuadraticPenalty(J, MSC_THRESHOLD, "max") for J in Jmscs) \
     + ARCLENGTH_WEIGHT * sum(Jals) \
     + CS_WEIGHT * Jcsdist \
-    + linknum
+    + linkNum
+
+#J_LENGTH_PENALTY = LENGTH_CON_WEIGHT * sum([QuadraticPenalty(Jls[i], LENGTH_THRESHOLD) for i in range(len(base_curves))])
 # We don't have a general interface in SIMSOPT for optimisation problems that
 # are not in least-squares form, so we write a little wrapper function that we
 # pass directly to scipy.optimize.minimize
@@ -265,10 +282,10 @@ def fun(dofs):
     outstr += f", Len=sum([{cl_string}])={sum(J.J() for J in Jls):.1f}, ϰ=[{kap_string}], ∫ϰ²/L=[{msc_string}]"
     outstr += f", C-C-Sep={Jccdist.shortest_distance():.2f}"
     outstr += f", ║∇J║={np.linalg.norm(grad):.1e}"
-    #print(outstr)
+    print(outstr)
     return J, grad
 
-
+print("Number of variables to optimize,",len(JF.x))
 print("""
 ################################################################################
 ### Perform a Taylor test ######################################################
@@ -277,6 +294,7 @@ print("""
 
 f = fun
 dofs = JF.x
+
 np.random.seed(1)
 h = np.random.uniform(size=dofs.shape)
 J0, dJ0 = f(dofs)
@@ -352,10 +370,16 @@ print(f"Flux Objective for exact coils coils      : {sq_flux_unperturbed:.3e}")
 print(f"Out-of-sample flux value                  : {np.mean(squared_flux_data):.3e}")
 print(f"Objective Gradient (||∇J||)              : {np.linalg.norm(JF.dJ()):.3e}")
 
-np.save(OUT_DIR / f"perturbed_sq_flux_data_{loop_numerical_data_label}",squared_flux_data)
-np.save(OUT_DIR / f"sq_flux_value_{loop_numerical_data_label}",Jf.J())
-np.save(OUT_DIR / f"gradient_{loop_numerical_data_label}",np.linalg.norm(JF.dJ()))
+# np.save(OUT_DIR / f"perturbed_sq_flux_data_{loop_numerical_data_label}",squared_flux_data)
+# np.save(OUT_DIR / f"sq_flux_value_{loop_numerical_data_label}",Jf.J())
+# np.save(OUT_DIR / f"gradient_{loop_numerical_data_label}",np.linalg.norm(JF.dJ()))
 
+np.savez(OUT_DIR / f"results_{loop_numerical_data_label}.npz",
+         saved_parameter = save_param,
+         sq_flux_value = Jf.J(),
+         perturbed_sq_flux_data = squared_flux_data,
+         gradient = np.linalg.norm(JF.dJ())
+         )
 
 end = time.time()
 time_taken = f"Took {(end - start):.2f} for run {loop_label}."
