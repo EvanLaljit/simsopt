@@ -55,7 +55,7 @@ slurm_array_int = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
 order = 24
 
 # Number of samples to approximate the mean
-N_SAMPLES = 50
+N_SAMPLES = 4
 
 # Standard deviation for the coil errors
 # Length scale for the coil errors
@@ -64,7 +64,7 @@ SIGMA, L = 1e-2, 0.5
 # Pick which configuration you want
 CONFIG_NAME = "NCSX" 
 
-RUN_MODE = 'order_scan'
+RUN_MODE = 'pert_init'
 
 if RUN_MODE == 'pert_init':
     # Initial guess perturbation parameters
@@ -94,6 +94,7 @@ elif RUN_MODE == 'order_scan':
     print(loop_label)
     if slurm_array_int >= len(order_values):
         raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(order_values)} orders")
+    
 elif RUN_MODE == 'normal':
     print("Running normal mode")
     loop_label = ""
@@ -154,12 +155,6 @@ if MAXITER != 2000:
 OUT_DIR = Path(out_dir_path)
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-#save appropriate array
-if RUN_MODE == 'sigma_l_scan':
-    np.save(OUT_DIR / "sigma_and_L", sigma_and_L)
-    np.save(OUT_DIR / "L_values", L_values)
-elif RUN_MODE == 'order_scan':
-    np.save(OUT_DIR / "order_values", order_values)
 
 # Create the subdirectory
 SUB_DIR = OUT_DIR / "Non-VTK_Data"
@@ -178,7 +173,7 @@ params = {
     'json_variables': json_params,
 }
 
-with open(SUB_DIR / 'input_parameters.json', 'w') as f:
+with open(SUB_DIR / 'input_parameters_save.json', 'w') as f:
     json.dump(params, f, indent=1)
     
 # Initialize the boundary magnetic surface; errors break symmetries, so consider the full torus
@@ -312,14 +307,14 @@ JF = Jmpi \
     + CS_WEIGHT * Jcsdist \
     + linkNum
     
-# 
+
 # We don't have a general interface in SIMSOPT for optimisation problems that
 # are not in least-squares form, so we write a little wrapper function that we
 # pass directly to scipy.optimize.minimize
 
 iteration_counter = 0
 def fun(dofs):
-    global iteration_counter
+    global iteration_counter, last_outstr
     iteration_counter += 1
     JF.x = dofs
     J = JF.J()
@@ -333,9 +328,8 @@ def fun(dofs):
     msc_string = ", ".join(f"{J.J():.1f}" for J in Jmscs)
     outstr += f", Len=sum([{cl_string}])={sum(J.J() for J in Jls):.1f}, ϰ=[{kap_string}], ∫ϰ²/L>=[{msc_string}], C-C-Sep={Jccdist.shortest_distance():.2f}"
     outstr += f", ║∇J║={np.linalg.norm(grad):.1e}"
-
-    
-    #proc0_print(outstr, flush=True)
+    last_outstr = outstr
+    proc0_print(outstr, flush=True)
     return J, grad
 
 proc0_print("""
@@ -412,9 +406,6 @@ proc0_print(f"Flux Objective for exact coils coils      : {Jf.J():.3e}")
 proc0_print(f"Out-of-sample flux value                  : {np.mean(squared_flux_data):.3e}")
 proc0_print(f"Objective Gradient (||∇J||)              : {np.linalg.norm(JF.dJ()):.3e}")
 
-# np.save(OUT_DIR / f"perturbed_sq_flux_data_{loop_numerical_data_label}",squared_flux_data)
-# np.save(OUT_DIR / f"sq_flux_value_{loop_numerical_data_label}",Jf.J())
-# np.save(OUT_DIR / f"gradient_{loop_numerical_data_label}",np.linalg.norm(JF.dJ()))
 
 np.savez(OUT_DIR / f"results_{loop_numerical_data_label}.npz",
          saved_parameter = save_param,
@@ -423,38 +414,15 @@ np.savez(OUT_DIR / f"results_{loop_numerical_data_label}.npz",
          gradient = np.linalg.norm(JF.dJ())
          )
 
-# Optionally make a QFM and pass it to VMEC
-# This is worthless unless plasma
-# surface is at least 64 x 64 resolution.
-vmec_flag = False
-if vmec_flag:
-    from simsopt.util.permanent_magnet_helper_functions import make_qfm
-    from simsopt.mhd.vmec import Vmec
-    from simsopt.util.mpi import MpiPartition
-    mpi = MpiPartition(ngroups=1)
-
-    # Make the QFM surfaces
-    t1 = time.time()
-    Bfield = bs 
-    Bfield.set_points(s_plot.gamma().reshape((-1, 3)))
-    qfm_surf = make_qfm(s_plot, Bfield)
-    qfm_surf = qfm_surf.surface
-    t2 = time.time()
-    print("Making the QFM surface took ", t2 - t1, " s")
-
-    # Run VMEC with new QFM surface
-    t1 = time.time()
-
-    ### Always use the QA VMEC file and just change the boundary
-    vmec_input = surf_filename
-    equil = Vmec(vmec_input, mpi)
-    equil.boundary = qfm_surf
-    equil.run()
+#Save objective function values from outstr in fun() wrapper function
+with open(SUB_DIR / 'objective_func_values.txt', 'a') as f:
+    f.write(f"Run {loop_label}: \n" + last_outstr)
     
 end = time.time()
 time_taken = f"Took {(end - start):.2f} for run {loop_label}."
 
-with open(SUB_DIR / 'run_times.txt', 'w') as f:
-            f.write(time_taken)
+#Save run times
+with open(SUB_DIR / 'run_times.txt', 'a') as f:
+            f.write(time_taken + "\n")
             
 print(f"Total time taken: {(end - start):.2f} seconds")

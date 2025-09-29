@@ -55,7 +55,7 @@ SIGMA_OOS, L_OOS = 1e-2, 0.5
 # Choose and load input parameters from configuration
 CONFIG_NAME = "NCSX" 
 
-RUN_MODE = 'order_scan'
+RUN_MODE = 'pert_init'
 
 if RUN_MODE == 'pert_init':
     # Initial guess perturbation parameters
@@ -90,6 +90,7 @@ elif RUN_MODE == 'normal':
     print("Running normal mode")
     loop_label = ""
     save_param = 0
+    
 else:
     exit()
 
@@ -138,12 +139,6 @@ if MAXITER != 1000:
 OUT_DIR = Path(out_dir_path)
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-#save appropriate array
-if RUN_MODE == 'sigma_l_scan':
-    np.save(OUT_DIR / "sigma_and_L", sigma_and_L)
-    np.save(OUT_DIR / "L_values", L_values)
-elif RUN_MODE == 'order_scan':
-    np.save(OUT_DIR / "order_values", order_values)
 
 # Create the subdirectory
 SUB_DIR = OUT_DIR / "Non-VTK_Data"
@@ -162,7 +157,7 @@ params = {
     'json_variables': json_params,
 }
 
-with open(SUB_DIR / 'input_parameters.json', 'w') as f:
+with open(SUB_DIR / 'input_parameters_save.json', 'w') as f:
     json.dump(params, f, indent=1)
     
 
@@ -267,7 +262,7 @@ JF = Jf \
 
 iteration_counter = 0
 def fun(dofs):
-    global iteration_counter
+    global iteration_counter, last_outstr
     iteration_counter += 1
     JF.x = dofs
     J = JF.J()
@@ -282,6 +277,7 @@ def fun(dofs):
     outstr += f", Len=sum([{cl_string}])={sum(J.J() for J in Jls):.1f}, ϰ=[{kap_string}], ∫ϰ²/L=[{msc_string}]"
     outstr += f", C-C-Sep={Jccdist.shortest_distance():.2f}"
     outstr += f", ║∇J║={np.linalg.norm(grad):.1e}"
+    last_outstr = outstr
     print(outstr)
     return J, grad
 
@@ -370,9 +366,6 @@ print(f"Flux Objective for exact coils coils      : {sq_flux_unperturbed:.3e}")
 print(f"Out-of-sample flux value                  : {np.mean(squared_flux_data):.3e}")
 print(f"Objective Gradient (||∇J||)              : {np.linalg.norm(JF.dJ()):.3e}")
 
-# np.save(OUT_DIR / f"perturbed_sq_flux_data_{loop_numerical_data_label}",squared_flux_data)
-# np.save(OUT_DIR / f"sq_flux_value_{loop_numerical_data_label}",Jf.J())
-# np.save(OUT_DIR / f"gradient_{loop_numerical_data_label}",np.linalg.norm(JF.dJ()))
 
 np.savez(OUT_DIR / f"results_{loop_numerical_data_label}.npz",
          saved_parameter = save_param,
@@ -380,11 +373,15 @@ np.savez(OUT_DIR / f"results_{loop_numerical_data_label}.npz",
          perturbed_sq_flux_data = squared_flux_data,
          gradient = np.linalg.norm(JF.dJ())
          )
-
+#Save objective function values from outstr in fun() wrapper function
+with open(SUB_DIR / 'objective_func_values.txt', 'a') as f:
+    f.write(f"Run {loop_label}: \n" + last_outstr)
+    
 end = time.time()
 time_taken = f"Took {(end - start):.2f} for run {loop_label}."
 
-with open(SUB_DIR / 'run_times.txt', 'w') as f:
-            f.write(time_taken)
+#Save run times
+with open(SUB_DIR / 'run_times.txt', 'a') as f:
+            f.write(time_taken + "\n")
             
 print(f"Took {end-start}s")
