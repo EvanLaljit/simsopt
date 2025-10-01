@@ -35,7 +35,7 @@ from scipy.optimize import minimize
 from simsopt.field import BiotSavart, Current, Coil, coils_via_symmetries
 from simsopt.geo import (CurveLength, CurveCurveDistance, curves_to_vtk, create_equally_spaced_curves, SurfaceRZFourier,
                          MeanSquaredCurvature, LpCurveCurvature, CurveSurfaceDistance, ArclengthVariation, GaussianSampler, 
-                         CurvePerturbed, 
+                         CurvePerturbed, CurrentPerturbed, 
                          PerturbationSample, LinkingNumber)
 from simsopt.objectives import QuadraticPenalty, MPIObjective, SquaredFlux
 from simsopt.util import in_github_actions, proc0_print, comm_world, curve_fourier_fit
@@ -58,9 +58,9 @@ order = 24
 # Number of samples to approximate the mean
 N_SAMPLES = 4
 
-# Standard deviation for the coil errors
-# Length scale for the coil errors
-SIGMA, L = 1e-2, 0.5
+# Current Parameters
+CURRENT_BASE = 1e5
+SIGMA_CURRENT = 1e-1 * CURRENT_BASE 
 
 # Pick which configuration you want
 CONFIG_NAME = "QA" 
@@ -113,12 +113,10 @@ else:
 
     
 # Out-of-sample evaluation parameters
-N_OOS = 1000
-SIGMA_OOS = SIGMA
-L_OOS = L
+N_OOS = 10000
+SIGMA_OOS = SIGMA_CURRENT
 
-
-# Number of iterations to perform:
+# Number of iterations to perform
 MAXITER = 50 if in_github_actions else 2000
 
 #######################################################
@@ -214,8 +212,8 @@ else:
 # # of the currents:
 # base_currents[0].fix_all()
 
-base_currents = [Current(1e5) for i in range(ncoils-1)]
-total_current = Current(1e5*ncoils)
+base_currents = [Current(CURRENT_BASE) for i in range(ncoils-1)]
+total_current = Current(CURRENT_BASE*ncoils)
 total_current.fix_all()
 base_currents += [total_current - sum(base_currents)]
 
@@ -244,24 +242,19 @@ linkNum = LinkingNumber(curves)
 
 seed = 0
 rg = Generator(PCG64DXSM(seed))
-# rg = np.random.Generator(PCG64(seed, inc=0))
-sampler = GaussianSampler(curves[0].quadpoints, SIGMA, L, n_derivs=1)
 Jfs = []
-curves_pert = []
+currents_pert = []
 print("Starting N_SAMPLE LOOP")
 for i in range(N_SAMPLES):
     # first add the 'systematic' error. this error is applied to the base curves and hence the various symmetries are applied to it.
-    base_curves_perturbed = [CurvePerturbed(c, PerturbationSample(sampler, randomgen=rg)) for c in base_curves]
-    coils = coils_via_symmetries(base_curves_perturbed, base_currents, s.nfp, True)
-    # now add the 'statistical' error. this error is added to each of the final coils, and independent between all of them.
-    coils_pert = [Coil(CurvePerturbed(c.curve, PerturbationSample(sampler, randomgen=rg)), c.current) for c in coils]
-    curves_pert.append([c.curve for c in coils_pert])
+    # setup perturbed currents
+    base_currents_perturbed = [CurrentPerturbed(c, SIGMA_CURRENT*rg.standard_normal()) for c in base_currents]
+    # perturb the currents
+    coils_pert = coils_via_symmetries(base_curves, base_currents_perturbed, s.nfp, True)
+    currents_pert.append([c.current for c in coils_pert])
     bs_pert = BiotSavart(coils_pert)
     Jfs.append(SquaredFlux(s, bs_pert))
     
-for k in range(len(curves_pert)):
-    if k < 15:
-        curves_to_vtk(curves_pert[k], OUT_DIR / f"curves_pert_n_sample_{k}")
 
 Jmpi = MPIObjective(Jfs, comm_world, needs_splitting=True)
 
@@ -357,22 +350,17 @@ Jf.x = res.x
 
 # now draw some fresh samples to evaluate the out-of-sample error
 rg = Generator(PCG64DXSM(seed+1))
-sampler = GaussianSampler(curves[0].quadpoints, SIGMA_OOS, L_OOS, n_derivs=1)
-b_dot_n_pert = np.zeros((qphi, qtheta)) 
 squared_flux_data = []
-curves_pert_oos = []
+currents_pert_oos = []
 for i in range(N_OOS):
-    # first add the 'systematic' error. this error is applied to the base curves and hence the various symmetries are applied to it.
-    base_curves_perturbed = [CurvePerturbed(c, PerturbationSample(sampler, randomgen=rg)) for c in base_curves]
-    coils = coils_via_symmetries(base_curves_perturbed, base_currents, s.nfp, True)
-    # now add the 'statistical' error. this error is added to each of the final coils, and independent between all of them.
-    coils_pert = [Coil(CurvePerturbed(c.curve, PerturbationSample(sampler, randomgen=rg)), c.current) for c in coils]
-    curves_pert.append([c.curve for c in coils_pert])
+    # setup perturbed currents
+    base_currents_perturbed = [CurrentPerturbed(c, SIGMA_OOS*rg.standard_normal()) for c in base_currents]
+    # perturb the currents
+    coils_pert = coils_via_symmetries(base_curves, base_currents_perturbed, s.nfp, True)
     bs_pert = BiotSavart(coils_pert)
     squared_flux_data.append(SquaredFlux(s, bs_pert).J())
     if slurm_array_int==0 and i<15: 
-        curves_pert_oos.append([c.curve for c in coils_pert])
-        curves_to_vtk(curves_pert_oos[i], OUT_DIR / f"curves_pert_oos_{loop_label}_sample_{i}")
+        currents_pert_oos.append([c.current for c in coils_pert])
     if (i+1) % (N_OOS/10) == 0:
         proc0_print(f"Finished {i+1}/{N_OOS} Out-of-Sample Evaluations")
         

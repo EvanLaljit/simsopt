@@ -32,14 +32,15 @@ from simsopt.field import BiotSavart, Current, Coil, coils_via_symmetries
 from simsopt.geo import (SurfaceRZFourier, curves_to_vtk, create_equally_spaced_curves,
                          CurveLength, CurveCurveDistance, MeanSquaredCurvature,
                          LpCurveCurvature, CurveSurfaceDistance, ArclengthVariation,
-                         GaussianSampler, CurvePerturbed, PerturbationSample, LinkingNumber)
+                         GaussianSampler, CurvePerturbed, 
+                         PerturbationSample, LinkingNumber)
 from simsopt.objectives import Weight, SquaredFlux, QuadraticPenalty
 from simsopt.util import in_github_actions, curve_fourier_fit
 
 
 start = time.time()
 
-# Each SLURM array job will process one initial guess perturbation
+# assign slurm array job number to variable
 slurm_array_int = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
 
 # Number of Fourier modes describing each Cartesian component of each coil:
@@ -53,20 +54,23 @@ N_OOS = 1000
 SIGMA_OOS, L_OOS = 1e-2, 0.5
 
 # Choose and load input parameters from configuration
-CONFIG_NAME = "NCSX" 
+CONFIG_NAME = "QA" 
 
-RUN_MODE = 'pert_init'
+RUN_MODE = 'order_scan'
 
 if RUN_MODE == 'pert_init':
     # Initial guess perturbation parameters
+    print("Running initial guess perturbation scan")
     SIGMA_INITIAL_GUESS = 1e-2 # Standard deviation for the initial guess perturbation
     L_INITIAL_GUESS = 0.15 # Length scale for the initial guess perturbation
     fourier_fit = False #use curves with perturbed fourier coefficients
     loop_label = slurm_array_int #specify what to label results for each run
+    print(loop_label)
     save_param = [i for i in range(20)] #relevant parameters to save correspond with saved data
         
 elif RUN_MODE == 'sigma_l_scan':
     #scan sigma and L values for optimization
+    print("Running sigma and l scan")
     sigma_values = np.linspace(1e-3, 1e-2, 8) #sigma values to scan
     L_values = np.linspace(0.5, 1.0, 4) #L values to scan
     sigma_and_L = [(sigma, L) for sigma in sigma_values for L in L_values] #pairs of sigma and L
@@ -78,21 +82,26 @@ elif RUN_MODE == 'sigma_l_scan':
         raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(sigma_and_L)} orders")
     
 elif RUN_MODE == 'order_scan':
-    order_values = [int(i) for i in range(4,36,4)]
-    order = order_values[slurm_array_int]
-    loop_label = f"order={order}"
+    #scan order values 
+    print("Running order scan")
+    order_values = [int(i) for i in range(4,36,4)] #order values to scan
+    order = order_values[slurm_array_int] #assign order using slurm array number
+    loop_label = f"order={order}" #specify what to label results for each run
     save_param = order #relevant parameters to save to correspond with saved data
     print(loop_label)
     if slurm_array_int >= len(order_values):
         raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(order_values)} orders")
 
 elif RUN_MODE == 'normal':
+    #Run one optimization, no scanning
     print("Running normal mode")
     loop_label = ""
     save_param = 0
     
 else:
-    exit()
+    #no proper run mode defined --> dont execute code
+    raise ValueError("No run mode defined")
+
 
 # Number of iterations to perform:
 MAXITER = 50 if in_github_actions else 1000
@@ -107,16 +116,6 @@ with open("input_parameters.json") as f:
 config = all_configs[CONFIG_NAME]
 globals().update(config)  # Assign all keys as variables
 
-# Write input parameters to file
-# Just specify the variable names you want
-save_vars = ['SIGMA_OOS', 'L_OOS', 'MAXITER'
-             ]
-
-#specify what to label results for each run
-#currently being saved and labeled:
-#initial curves, perturbed initial curves, initial coils, 
-#base curves optimized, coils optimized, 
-
 #label for numerical data, like arrays or floats
 #unperturbed sq flux, gradient, perturbed sq flux distribution
 loop_numerical_data_label = slurm_array_int
@@ -127,7 +126,7 @@ TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolv
 filename = TEST_DIR / config["surface_filename"]
 
 # Directory for output
-out_dir_path = f"output_stage_two_optimization_{CONFIG_NAME}_{RUN_MODE}"
+out_dir_path = f"output_stage_two_optimization_currents_{CONFIG_NAME}_{RUN_MODE}"
 
 if RUN_MODE == 'pert_init':
     if fourier_fit == True:
@@ -144,22 +143,7 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 SUB_DIR = OUT_DIR / "Non-VTK_Data"
 SUB_DIR.mkdir(parents=True, exist_ok=True)
 
-#write input parameters to file
-# Get variables from your script
-script_params = {name: eval(name) for name in save_vars if name in locals() or name in globals()}
 
-# Get variables from JSON config
-json_params = {k: v for k, v in config.items()}
-
-# Combine both
-params = {
-    'script_variables': script_params,
-    'json_variables': json_params,
-}
-
-with open(SUB_DIR / 'input_parameters_save.json', 'w') as f:
-    json.dump(params, f, indent=1)
-    
 
 # Initialize the boundary magnetic surface:
 nphi = 64
@@ -219,6 +203,11 @@ base_currents = [Current(1e5) for i in range(ncoils)]
 # of the currents:
 base_currents[0].fix_all()
 
+# base_currents = [Current(1e5) for i in range(ncoils-1)]
+# total_current = Current(1e5*ncoils)
+# total_current.fix_all()
+# base_currents += [total_current - sum(base_currents)]
+
 coils = coils_via_symmetries(base_curves, base_currents, s.nfp, True)
 bs = BiotSavart(coils)
 
@@ -268,8 +257,10 @@ def fun(dofs):
     J = JF.J()
     grad = JF.dJ()
     jf = Jf.J()
+    currents = JF.x[:ncoils-1]
     BdotN = np.mean(np.abs(np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)))
     outstr = f"Iteration {iteration_counter}/{MAXITER}-----\n"
+    outstr += f"currents: {currents}\n"
     outstr += f"J={J:.1e}, Jf={jf:.1e}, ⟨B·n⟩={BdotN:.1e}"
     cl_string = ", ".join([f"{J.J():.1f}" for J in Jls])
     kap_string = ", ".join(f"{np.max(c.kappa()):.1f}" for c in base_curves)
@@ -281,7 +272,7 @@ def fun(dofs):
     print(outstr)
     return J, grad
 
-print("Number of variables to optimize,",len(JF.x))
+
 print("""
 ################################################################################
 ### Perform a Taylor test ######################################################
@@ -311,35 +302,18 @@ iteration_counter = 0
 
 res = minimize(fun, dofs, jac=True, method='L-BFGS-B', options={'maxiter': MAXITER, 'maxcor': 300}, tol = 1e-15)
 
-for c in base_currents:
-    print(f"-----------------Base current: {c.x}")
-    
 curves_to_vtk(curves, OUT_DIR / f"curves_opt_{loop_label}")
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 pointData = {"B_N": np.sum(bs.B().reshape((qphi, qtheta, 3)) * s_plot.unitnormal(), axis=2)[:, :, None]}
 s_plot.to_vtk(OUT_DIR / f"surf_opt_{loop_label}", extra_data=pointData)
 bs.set_points(s.gamma().reshape((-1, 3)))
 
-# We now use the result from the optimization as the initial guess for a
-# subsequent optimization with reduced penalty for the coil length. This will
-# result in slightly longer coils but smaller `B·n` on the surface.
-# dofs = res.x
-# LENGTH_WEIGHT *= 0.1
-# res = minimize(fun, x0, jac=True, method='L-BFGS-B', options={'maxiter': MAXITER, 'maxcor': 300}, tol=1e-15)
-# curves_to_vtk(curves, OUT_DIR / f"curves_opt_long_{j}")
-# bs.set_points(s_plot.gamma().reshape((-1, 3)))
-# pointData = {"B_N": np.sum(bs.B().reshape((qphi, qtheta, 3)) * s_plot.unitnormal(), axis=2)[:, :, None]}
-# s_plot.to_vtk(OUT_DIR / f"surf_opt_long_{j}", extra_data=pointData)
-
-bs.set_points(s.gamma().reshape((-1, 3)))
 curves_to_vtk(base_curves, OUT_DIR / f"base_curves_opt_{loop_label}")
 # Save the optimized coil shapes and currents so they can be loaded into other scripts for analysis:
 bs.save(OUT_DIR / "biot_savart_opt.json")
-sq_flux_unperturbed = Jf.J()
 
 #Perturb coils
 seed = 0
-curves_pert = []
 squared_flux_data = []
 curves_pert_oos = []
 rg = Generator(PCG64DXSM(seed+1))
@@ -362,20 +336,42 @@ for i in range(N_OOS):
     if (i+1) % (N_OOS/10) == 0:
         print(f"Finished {i+1}/{N_OOS} Out-of-Sample Evaluations")
         
-print(f"Flux Objective for exact coils coils      : {sq_flux_unperturbed:.3e}")
-print(f"Out-of-sample flux value                  : {np.mean(squared_flux_data):.3e}")
-print(f"Objective Gradient (||∇J||)              : {np.linalg.norm(JF.dJ()):.3e}")
+#store main results in string, print and save
+main_results_str = f"Flux Objective for exact coils    : {Jf.J():.3e}\n"
+main_results_str += f"Out-of-sample flux value                  : {np.mean(squared_flux_data):.3e}\n"
+main_results_str += f"Objective Gradient (||∇J||)              : {np.linalg.norm(JF.dJ()):.3e}\n"
+main_results_str += f"Quality Number: {Jf.J()/np.mean(squared_flux_data):.3f}\n"
 
+print(main_results_str)
 
+with open(SUB_DIR / 'main_results.txt', 'a') as f:
+    f.write(f"Run {loop_label}: \n" + main_results_str)
+
+#save data as array for plotting
 np.savez(OUT_DIR / f"results_{loop_numerical_data_label}.npz",
          saved_parameter = save_param,
          sq_flux_value = Jf.J(),
          perturbed_sq_flux_data = squared_flux_data,
          gradient = np.linalg.norm(JF.dJ())
          )
+
 #Save objective function values from outstr in fun() wrapper function
 with open(SUB_DIR / 'objective_func_values.txt', 'a') as f:
-    f.write(f"Run {loop_label}: \n" + last_outstr)
+    f.write(f"Run {loop_label}: \n" + last_outstr + "\n")
+    
+# Write input parameters to file
+# Just specify the variable names you want
+save_vars = ['SIGMA', 'L', 'MAXITER'
+             ]
+
+# Combine both
+params = {
+    'script_variables': {name: eval(name) for name in save_vars if name in locals() or name in globals()},
+    'json_variables': {k: v for k, v in config.items()},
+}
+
+with open(SUB_DIR / 'input_parameters_save.json', 'w') as f:
+    json.dump(params, f, indent=1)
     
 end = time.time()
 time_taken = f"Took {(end - start):.2f} for run {loop_label}."
