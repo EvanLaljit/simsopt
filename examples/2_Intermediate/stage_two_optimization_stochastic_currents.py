@@ -82,7 +82,7 @@ elif RUN_MODE == 'sigma_l_scan':
     print("Running sigma and l scan")
     sigma_values = np.linspace(1e-2, 1e-1, 8) * CURRENT_BASE #sigma values to scan
     SIGMA_CURRENT = sigma_values[slurm_array_int] #assign sigma a using slurm array number
-    loop_label = f"Sigma = {SIGMA_CURRENT}" #specify what to label results for each run
+    loop_label = f"Sigma = {SIGMA_CURRENT/CURRENT_BASE}" #specify what to label results for each run
     save_param = SIGMA_CURRENT #relevant parameters to save correspond with saved data
     print(loop_label)
     if slurm_array_int >= len(sigma_values):
@@ -111,7 +111,7 @@ else:
 
     
 # Out-of-sample evaluation parameters
-N_OOS = 10000
+N_OOS = 1000
 SIGMA_OOS = SIGMA_CURRENT
 
 # Number of iterations to perform
@@ -244,12 +244,10 @@ Jfs = []
 currents_pert = []
 print("Starting N_SAMPLE LOOP")
 for i in range(N_SAMPLES):
-    # first add the 'systematic' error. this error is applied to the base curves and hence the various symmetries are applied to it.
-    # setup perturbed currents
-    base_currents_perturbed = [CurrentPerturbed(c, SIGMA_CURRENT*rg.standard_normal()) for c in base_currents]
-    # perturb the currents
-    coils_pert = coils_via_symmetries(base_curves, base_currents_perturbed, s.nfp, True)
-    currents_pert.append([c.current for c in coils_pert])
+    # perturb the currents for all the coils independently
+    coils = coils_via_symmetries(base_curves, base_currents, s.nfp, True) #redundant?
+    coils_pert = [Coil(c.curve, CurrentPerturbed(c.current, SIGMA_CURRENT*rg.standard_normal())) for c in coils]
+    currents_pert.append([c.current.get_value() for c in coils_pert])
     bs_pert = BiotSavart(coils_pert)
     Jfs.append(SquaredFlux(s, bs_pert))
 
@@ -337,7 +335,7 @@ proc0_print("""
 
 curves_to_vtk(curves, OUT_DIR / f"curves_opt_{loop_label}")
 curves_to_vtk(base_curves, OUT_DIR / f"base_curves_opt_{loop_label}")
-bs.save(OUT_DIR / "biot_savart_opt.json")
+bs.save(OUT_DIR / f"biot_savart_opt_{loop_label}.json")
 
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 pointData = {"B_N": np.sum(bs.B().reshape((qphi, qtheta, 3)) * s_plot.unitnormal(), axis=2)[:, :, None]}
@@ -351,14 +349,13 @@ rg = Generator(PCG64DXSM(seed+1))
 squared_flux_data = []
 currents_pert_oos = []
 for i in range(N_OOS):
-    # setup perturbed currents
-    base_currents_perturbed = [CurrentPerturbed(c, SIGMA_OOS*rg.standard_normal()) for c in base_currents]
-    # perturb the currents
-    coils_pert = coils_via_symmetries(base_curves, base_currents_perturbed, s.nfp, True)
+    # perturb the currents for all the coils independently
+    coils = coils_via_symmetries(base_curves, base_currents, s.nfp, True) #redundant?
+    coils_pert = [Coil(c.curves, CurrentPerturbed(c.current, SIGMA_CURRENT*rg.standard_normal())) for c in coils]
     bs_pert = BiotSavart(coils_pert)
     squared_flux_data.append(SquaredFlux(s, bs_pert).J())
     if slurm_array_int==0 and i<15: 
-        currents_pert_oos.append([c.current for c in coils_pert])
+        currents_pert_oos.append([c.current.get_value() for c in coils_pert])
     if (i+1) % (N_OOS/10) == 0:
         proc0_print(f"Finished {i+1}/{N_OOS} Out-of-Sample Evaluations")
         

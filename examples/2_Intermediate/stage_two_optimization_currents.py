@@ -55,7 +55,8 @@ SIGMA_OOS, L_OOS = 1e-2, 0.5
 
 CURRENT_BASE = 1e5
 SIGMA_CURRENT_OOS = 1e-1 * CURRENT_BASE
-# Choose and load input parameters from configuration
+
+# Pick which configuration you want
 CONFIG_NAME = "NCSX" 
 
 RUN_MODE = 'sigma_l_scan'
@@ -75,7 +76,7 @@ elif RUN_MODE == 'sigma_l_scan':
     print("Running sigma and l scan")
     sigma_values = np.linspace(1e-2, 1e-1, 8) * CURRENT_BASE #sigma values to scan
     SIGMA_CURRENT_OOS = sigma_values[slurm_array_int] #assign sigma a using slurm array number
-    loop_label = f"Sigma = {SIGMA_CURRENT_OOS}" #specify what to label results for each run
+    loop_label = f"Sigma = {SIGMA_CURRENT_OOS/CURRENT_BASE}" #specify what to label results for each run
     save_param = SIGMA_CURRENT_OOS #relevant parameters to save correspond with saved data
     print(loop_label)
     if slurm_array_int >= len(sigma_values):
@@ -310,7 +311,7 @@ bs.set_points(s.gamma().reshape((-1, 3)))
 
 curves_to_vtk(base_curves, OUT_DIR / f"base_curves_opt_{loop_label}")
 # Save the optimized coil shapes and currents so they can be loaded into other scripts for analysis:
-bs.save(OUT_DIR / "biot_savart_opt.json")
+bs.save(OUT_DIR / f"biot_savart_opt_{loop_label}.json")
 
 #Perturb coils
 seed = 0
@@ -318,17 +319,16 @@ squared_flux_data = []
 currents_pert_oos = []
 rg = Generator(PCG64DXSM(seed+1))
 for i in range(N_OOS):
-    # setup perturbed currents
-    base_currents_perturbed = [CurrentPerturbed(c, SIGMA_CURRENT_OOS*rg.standard_normal()) for c in base_currents]
-    # perturb the currents
-    coils_pert = coils_via_symmetries(base_curves, base_currents_perturbed, s.nfp, True)
+    # perturb the currents for all the coils independently
+    coils = coils_via_symmetries(base_curves, base_currents, s.nfp, True) #redundant?
+    coils_pert = [Coil(c.curves, CurrentPerturbed(c.current, SIGMA_CURRENT_OOS*rg.standard_normal())) for c in coils]
     # Squared Flux calculation
     bs_pert = BiotSavart(coils_pert)
     bs_pert.set_points(s.gamma().reshape((-1, 3)))
     squared_flux_data.append(SquaredFlux(s, bs_pert).J())
     #only save first 15 samples, for first initial guess
     if slurm_array_int==0 and i<15: 
-        currents_pert_oos.append([c.current for c in coils_pert])
+        currents_pert_oos.append([c.current.get_value() for c in coils_pert])
     #print progress
     if (i+1) % (N_OOS/10) == 0:
         print(f"Finished {i+1}/{N_OOS} Out-of-Sample Evaluations")
