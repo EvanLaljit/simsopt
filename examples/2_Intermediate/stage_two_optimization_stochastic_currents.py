@@ -65,7 +65,7 @@ SIGMA_CURRENT = 1e-1 * CURRENT_BASE
 # Pick which configuration you want
 CONFIG_NAME = "QA" 
 
-RUN_MODE = 'normal'
+RUN_MODE = 'sigma_l_scan'
 
 if RUN_MODE == 'pert_init':
     # Initial guess perturbation parameters
@@ -80,15 +80,13 @@ if RUN_MODE == 'pert_init':
 elif RUN_MODE == 'sigma_l_scan':
     #scan sigma and L values for optimization
     print("Running sigma and l scan")
-    sigma_values = np.linspace(1e-3, 1e-2, 8) #sigma values to scan
-    L_values = np.linspace(0.5, 1.0, 4) #L values to scan
-    sigma_and_L = [(sigma, L) for sigma in sigma_values for L in L_values] #pairs of sigma and L
-    SIGMA, L= sigma_and_L[slurm_array_int] #assign sigma and L using slurm array number
-    loop_label = f"Sigma={SIGMA:.3f};L={L:.3f}" #specify what to label results for each run
-    save_param = (SIGMA,L) #relevant parameters to save correspond with saved data
+    sigma_values = np.linspace(1e-2, 1e-1, 8) * CURRENT_BASE #sigma values to scan
+    SIGMA_CURRENT = sigma_values[slurm_array_int] #assign sigma a using slurm array number
+    loop_label = f"Sigma = {SIGMA_CURRENT}" #specify what to label results for each run
+    save_param = SIGMA_CURRENT #relevant parameters to save correspond with saved data
     print(loop_label)
-    if slurm_array_int >= len(sigma_and_L):
-        raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(sigma_and_L)} orders")
+    if slurm_array_int >= len(sigma_values):
+        raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(sigma_values)} orders")
     
 elif RUN_MODE == 'order_scan':
     #scan order values 
@@ -254,7 +252,7 @@ for i in range(N_SAMPLES):
     currents_pert.append([c.current for c in coils_pert])
     bs_pert = BiotSavart(coils_pert)
     Jfs.append(SquaredFlux(s, bs_pert))
-    
+
 
 Jmpi = MPIObjective(Jfs, comm_world, needs_splitting=True)
 

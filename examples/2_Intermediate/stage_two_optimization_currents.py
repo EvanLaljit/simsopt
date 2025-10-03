@@ -56,9 +56,9 @@ SIGMA_OOS, L_OOS = 1e-2, 0.5
 CURRENT_BASE = 1e5
 SIGMA_CURRENT_OOS = 1e-1 * CURRENT_BASE
 # Choose and load input parameters from configuration
-CONFIG_NAME = "QA" 
+CONFIG_NAME = "NCSX" 
 
-RUN_MODE = 'order_scan'
+RUN_MODE = 'sigma_l_scan'
 
 if RUN_MODE == 'pert_init':
     # Initial guess perturbation parameters
@@ -73,15 +73,13 @@ if RUN_MODE == 'pert_init':
 elif RUN_MODE == 'sigma_l_scan':
     #scan sigma and L values for optimization
     print("Running sigma and l scan")
-    sigma_values = np.linspace(1e-3, 1e-2, 8) #sigma values to scan
-    L_values = np.linspace(0.5, 1.0, 4) #L values to scan
-    sigma_and_L = [(sigma, L) for sigma in sigma_values for L in L_values] #pairs of sigma and L
-    SIGMA_OOS, L_OOS = sigma_and_L[slurm_array_int] #assign sigma and L using slurm array number
-    loop_label = slurm_array_int #specify what to label results for each run
-    save_param = (SIGMA_OOS,L_OOS) #relevant parameters to save correspond with saved data
+    sigma_values = np.linspace(1e-2, 1e-1, 8) * CURRENT_BASE #sigma values to scan
+    SIGMA_CURRENT_OOS = sigma_values[slurm_array_int] #assign sigma a using slurm array number
+    loop_label = f"Sigma = {SIGMA_CURRENT_OOS}" #specify what to label results for each run
+    save_param = SIGMA_CURRENT_OOS #relevant parameters to save correspond with saved data
     print(loop_label)
-    if slurm_array_int >= len(sigma_and_L):
-        raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(sigma_and_L)} orders")
+    if slurm_array_int >= len(sigma_values):
+        raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(sigma_values)} orders")
     
 elif RUN_MODE == 'order_scan':
     #scan order values 
