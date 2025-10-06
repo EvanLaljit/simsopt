@@ -31,17 +31,15 @@ import time
 from pathlib import Path
 from numpy.random import PCG64DXSM, Generator
 import numpy as np
-import json 
 from scipy.optimize import minimize
 from simsopt.field import BiotSavart, Current, Coil, coils_via_symmetries
 from simsopt.geo import (CurveLength, CurveCurveDistance, curves_to_vtk, create_equally_spaced_curves, SurfaceRZFourier,
                          MeanSquaredCurvature, LpCurveCurvature, CurveSurfaceDistance, ArclengthVariation, GaussianSampler, 
-                         CurvePerturbed, CurrentPerturbed,
+                         CurvePerturbed, 
                          PerturbationSample, LinkingNumber)
 from simsopt.objectives import QuadraticPenalty, MPIObjective, SquaredFlux
 from simsopt.util import in_github_actions, proc0_print, comm_world, curve_fourier_fit
-from simsopt.field.force import coil_force, LpCurveForce
-from simsopt.field.selffield import regularization_circ
+import json 
 
 
 start = time.time()
@@ -62,13 +60,10 @@ N_SAMPLES = 4
 
 # Standard deviation for the coil errors
 # Length scale for the coil errors
-# Perturbations applied to coil positions and currents
-SIGMA_CURVE, L_CURVE = 1e-2, 0.5
-CURRENT_BASE = 1e5
-SIGMA_CURRENT = 1e-1 * CURRENT_BASE 
+SIGMA, L = 1e-2, 0.5
 
 # Pick which configuration you want
-CONFIG_NAME = "QA" 
+CONFIG_NAME = "NCSX" 
 
 RUN_MODE = 'sigma_l_scan'
 
@@ -86,17 +81,15 @@ if RUN_MODE == 'pert_init':
 elif RUN_MODE == 'sigma_l_scan':
     #scan sigma and L values for optimization
     print("Running sigma and l scan")
-    sigma_curves_values = np.linspace(1e-3, 1e-2, 8) #sigma values to scan
-    L_curves_values = np.linspace(0.5, 0.5, 1) #L values to scan
-    sigma_and_L_curves = [(sigma, L) for sigma in sigma_curves_values for L in L_curves_values] #pairs of sigma and L
-    SIGMA_CURVE , L_CURVE = sigma_and_L_curves[slurm_array_int] #assign sigma and L using slurm array number
-    sigma_current_values = np.linspace(1e-2, 1e-1, 8) * CURRENT_BASE
-    SIGMA_CURRENT = sigma_current_values[slurm_array_int]
-    loop_label = f"Sigma_curve={SIGMA_CURVE:.3f};L_curve={L_CURVE:.3f},Sigma_current={SIGMA_CURRENT:.3f}" #specify what to label results for each run
-    save_param = (SIGMA_CURVE,L_CURVE,SIGMA_CURRENT) #relevant parameters to save correspond with saved data
+    sigma_values = np.linspace(1e-3, 1e-2, 8) #sigma values to scan
+    L_values = np.linspace(0.5, 0.5, 1) #L values to scan
+    sigma_and_L = [(sigma, L) for sigma in sigma_values for L in L_values] #pairs of sigma and L
+    SIGMA, L= sigma_and_L[slurm_array_int] #assign sigma and L using slurm array number
+    loop_label = f"Sigma={SIGMA:.3f};L={L:.3f}" #specify what to label results for each run
+    save_param = (SIGMA,L) #relevant parameters to save correspond with saved data
     print(loop_label)
-    if slurm_array_int >= len(sigma_and_L_curves):
-        raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(sigma_and_L_curves)} orders")
+    if slurm_array_int >= len(sigma_and_L):
+        raise ValueError(f"SLURM_ARRAY_TASK_ID {slurm_array_int} out of range for {len(sigma_and_L)} orders")
     
 elif RUN_MODE == 'order_scan':
     #scan order values 
@@ -119,11 +112,11 @@ else:
     #no proper run mode defined --> dont execute code
     raise ValueError("No run mode defined")
 
+    
 # Out-of-sample evaluation parameters
 N_OOS = 1000
-SIGMA_CURVE_OOS = SIGMA_CURVE
-L_CURVE_OOS = L_CURVE
-SIGMA_CURRENT_OOS = SIGMA_CURRENT
+SIGMA_OOS = SIGMA
+L_OOS = L
 
 # Number of iterations to perform:
 MAXITER = 50 if in_github_actions else 2000
@@ -147,7 +140,7 @@ TEST_DIR = (Path(__file__).parent / ".." / ".." / "tests" / "test_files").resolv
 surf_filename = TEST_DIR / config["surface_filename"]
 
 # Directory for output
-out_dir_path = f"output_stage_two_optimization_stochastic_{CONFIG_NAME}_{N_SAMPLES}nsamp_{RUN_MODE}_"
+out_dir_path = f"output_stage_two_optimization_stochastic_curves_{CONFIG_NAME}_{N_SAMPLES}nsamp_{RUN_MODE}_"
 
 if RUN_MODE == 'pert_init':
     if fourier_fit == True:
@@ -252,7 +245,7 @@ linkNum = LinkingNumber(curves)
 seed = 0
 rg = Generator(PCG64DXSM(seed))
 # rg = np.random.Generator(PCG64(seed, inc=0))
-sampler = GaussianSampler(curves[0].quadpoints, SIGMA_CURVE, L_CURVE, n_derivs=1)
+sampler = GaussianSampler(curves[0].quadpoints, SIGMA, L, n_derivs=1)
 Jfs = []
 curves_pert = []
 print("Starting N_SAMPLE LOOP")
@@ -261,7 +254,7 @@ for i in range(N_SAMPLES):
     base_curves_perturbed = [CurvePerturbed(c, PerturbationSample(sampler, randomgen=rg)) for c in base_curves]
     coils = coils_via_symmetries(base_curves_perturbed, base_currents, s.nfp, True)
     # now add the 'statistical' error. this error is added to each of the final coils, and independent between all of them.
-    coils_pert = [Coil(CurvePerturbed(c.curve, PerturbationSample(sampler, randomgen=rg)), CurrentPerturbed(c.current, SIGMA_CURRENT*rg.standard_normal())) for c in coils]
+    coils_pert = [Coil(CurvePerturbed(c.curve, PerturbationSample(sampler, randomgen=rg)), c.current) for c in coils]
     curves_pert.append([c.curve for c in coils_pert])
     bs_pert = BiotSavart(coils_pert)
     Jfs.append(SquaredFlux(s, bs_pert))
@@ -364,34 +357,24 @@ Jf.x = res.x
 
 # now draw some fresh samples to evaluate the out-of-sample error
 rg = Generator(PCG64DXSM(seed+1))
-sampler = GaussianSampler(curves[0].quadpoints, SIGMA_CURVE_OOS, L_CURVE_OOS, n_derivs=1)
+sampler = GaussianSampler(curves[0].quadpoints, SIGMA_OOS, L_OOS, n_derivs=1)
 b_dot_n_pert = np.zeros((qphi, qtheta)) 
-squared_flux_data = [[],[],[]]
+squared_flux_data = []
 curves_pert_oos = []
-for j in range(3):
-    #perturb curves and currents, then currents only, then curves only
-    if j==1:
-        SIGMA_CURVE_OOS = 0
-        sampler = GaussianSampler(curves[0].quadpoints, SIGMA_CURVE_OOS, L_CURVE_OOS, n_derivs=1)
-    elif j==2:
-        SIGMA_CURRENT_OOS = 0
-    for i in range(N_OOS):
-        # first add the 'systematic' error. this error is applied to the base curves and hence the various symmetries are applied to it.
-        base_curves_perturbed = [CurvePerturbed(c, PerturbationSample(sampler, randomgen=rg)) for c in base_curves]
-        coils = coils_via_symmetries(base_curves_perturbed, base_currents, s.nfp, True)
-        # now add the 'statistical' error. this error is added to each of the final coils, and independent between all of them.
-        coils_pert = [Coil(CurvePerturbed(c.curve, PerturbationSample(sampler, randomgen=rg)), CurrentPerturbed(c.current, SIGMA_CURRENT_OOS*rg.standard_normal())) for c in coils]
-        # Squared Flux calculation
-        bs_pert = BiotSavart(coils_pert) 
-        bs_pert.set_points(s.gamma().reshape((-1, 3)))
-        squared_flux_data[j].append(SquaredFlux(s, bs_pert).J())
-        #only save first 15 samples, for first initial guess
-        if slurm_array_int==0 and i<15: 
-            curves_pert_oos.append([c.curve for c in coils_pert])
-            curves_to_vtk(curves_pert_oos[-1], OUT_DIR / f"curves_pert_oos_{loop_label}_sample_{i}")
-        #print progress
-        if (i+1) % (N_OOS/10) == 0:
-            print(f"Finished {i+1}/{N_OOS} Out-of-Sample Evaluations")
+for i in range(N_OOS):
+    # first add the 'systematic' error. this error is applied to the base curves and hence the various symmetries are applied to it.
+    base_curves_perturbed = [CurvePerturbed(c, PerturbationSample(sampler, randomgen=rg)) for c in base_curves]
+    coils = coils_via_symmetries(base_curves_perturbed, base_currents, s.nfp, True)
+    # now add the 'statistical' error. this error is added to each of the final coils, and independent between all of them.
+    coils_pert = [Coil(CurvePerturbed(c.curve, PerturbationSample(sampler, randomgen=rg)), c.current) for c in coils]
+    curves_pert.append([c.curve for c in coils_pert])
+    bs_pert = BiotSavart(coils_pert)
+    squared_flux_data.append(SquaredFlux(s, bs_pert).J())
+    if slurm_array_int==0 and i<15: 
+        curves_pert_oos.append([c.curve for c in coils_pert])
+        curves_to_vtk(curves_pert_oos[i], OUT_DIR / f"curves_pert_oos_{loop_label}_sample_{i}")
+    if (i+1) % (N_OOS/10) == 0:
+        proc0_print(f"Finished {i+1}/{N_OOS} Out-of-Sample Evaluations")
         
 #store main results in string, print and save
 main_results_str = f"Flux Objective for exact coils     : {Jf.J():.3e}\n"

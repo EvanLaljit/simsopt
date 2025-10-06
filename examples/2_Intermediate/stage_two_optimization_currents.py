@@ -36,7 +36,8 @@ from simsopt.geo import (SurfaceRZFourier, curves_to_vtk, create_equally_spaced_
                          PerturbationSample, LinkingNumber)
 from simsopt.objectives import Weight, SquaredFlux, QuadraticPenalty
 from simsopt.util import in_github_actions, curve_fourier_fit
-
+from simsopt.field.force import coil_force, LpCurveForce
+from simsopt.field.selffield import regularization_circ
 
 start = time.time()
 
@@ -50,14 +51,12 @@ order = 24
 N_OOS = 1000
 
 # Standard deviation for the coil errors
-# Length scale for the coil errors
-SIGMA_OOS, L_OOS = 1e-2, 0.5
 
 CURRENT_BASE = 1e5
 SIGMA_CURRENT_OOS = 1e-1 * CURRENT_BASE
 
 # Pick which configuration you want
-CONFIG_NAME = "NCSX" 
+CONFIG_NAME = "QA" 
 
 RUN_MODE = 'sigma_l_scan'
 
@@ -69,14 +68,15 @@ if RUN_MODE == 'pert_init':
     fourier_fit = False #use curves with perturbed fourier coefficients
     loop_label = slurm_array_int #specify what to label results for each run
     print(loop_label)
-    save_param = [i for i in range(20)] #relevant parameters to save correspond with saved data
+    seed_initial_guess = slurm_array_int #assign seed using slurm array number
+    save_param = slurm_array_int #relevant parameters to save correspond with saved data
         
 elif RUN_MODE == 'sigma_l_scan':
     #scan sigma and L values for optimization
     print("Running sigma and l scan")
     sigma_values = np.linspace(1e-2, 1e-1, 8) * CURRENT_BASE #sigma values to scan
     SIGMA_CURRENT_OOS = sigma_values[slurm_array_int] #assign sigma a using slurm array number
-    loop_label = f"Sigma = {SIGMA_CURRENT_OOS/CURRENT_BASE}" #specify what to label results for each run
+    loop_label = f"Sigma = {SIGMA_CURRENT_OOS/CURRENT_BASE:.3f}" #specify what to label results for each run
     save_param = SIGMA_CURRENT_OOS #relevant parameters to save correspond with saved data
     print(loop_label)
     if slurm_array_int >= len(sigma_values):
@@ -178,7 +178,7 @@ curves_to_vtk(base_curves_init, OUT_DIR / f"base_curves_init")
 # Perturb coils
 if RUN_MODE == "pert_init":
     
-    seed_initial_guess = slurm_array_int
+
     rg_initial_guess = Generator(PCG64DXSM(seed_initial_guess))
     sampler_initial_guess = GaussianSampler(base_curves_init[0].quadpoints, SIGMA_INITIAL_GUESS, L_INITIAL_GUESS, n_derivs=2)
     base_curves_pert = [CurvePerturbed(c, PerturbationSample(sampler_initial_guess, randomgen=rg_initial_guess)) for c in base_curves_init]
@@ -197,6 +197,7 @@ if RUN_MODE == "pert_init":
     
 else:
     base_curves = base_curves_init
+    
 
 base_currents = [Current(1e5) for i in range(ncoils)]
 # Since the target field is zero, one possible solution is just to set all
@@ -210,6 +211,15 @@ base_currents[0].fix_all()
 # base_currents += [total_current - sum(base_currents)]
 
 coils = coils_via_symmetries(base_curves, base_currents, s.nfp, True)
+base_coils = coils[:ncoils]
+
+#weird stuff going on here, coils end up havign current of +20 instead of +5
+# for i, c in enumerate(coils):
+#     print(f'{c.current.get_value()} for {i+1} coil /16' )
+#     c.current.x += [5]
+#     print(f'updated current {c.current.get_value()} for {i+1} coil / 16')
+    
+
 bs = BiotSavart(coils)
 
 curves = [c.curve for c in coils]
@@ -229,6 +239,7 @@ Jcs = [LpCurveCurvature(c, 2, CURVATURE_THRESHOLD) for c in base_curves]
 Jmscs = [MeanSquaredCurvature(c) for c in base_curves]
 Jals = [ArclengthVariation(c) for c in base_curves]
 linkNum = LinkingNumber(curves)
+Jforce = [LpCurveForce(c, coils, regularization_circ(0.05), p=4) for c in base_coils]
 
 # Form the total objective function. To do this, we can exploit the
 # fact that Optimizable objects with J() and dJ() functions can be
@@ -243,7 +254,8 @@ JF = Jf \
     + MSC_WEIGHT * sum(QuadraticPenalty(J, MSC_THRESHOLD, "max") for J in Jmscs) \
     + ARCLENGTH_WEIGHT * sum(Jals) \
     + CS_WEIGHT * Jcsdist \
-    + linkNum
+    + linkNum \
+    + FORCE_WEIGHT * sum(Jforce) \
 
 #J_LENGTH_PENALTY = LENGTH_CON_WEIGHT * sum([QuadraticPenalty(Jls[i], LENGTH_THRESHOLD) for i in range(len(base_curves))])
 # We don't have a general interface in SIMSOPT for optimisation problems that
@@ -318,10 +330,11 @@ seed = 0
 squared_flux_data = []
 currents_pert_oos = []
 rg = Generator(PCG64DXSM(seed+1))
+
 for i in range(N_OOS):
     # perturb the currents for all the coils independently
     coils = coils_via_symmetries(base_curves, base_currents, s.nfp, True) #redundant?
-    coils_pert = [Coil(c.curves, CurrentPerturbed(c.current, SIGMA_CURRENT_OOS*rg.standard_normal())) for c in coils]
+    coils_pert = [Coil(c.curve, CurrentPerturbed(c.current, SIGMA_CURRENT_OOS*rg.standard_normal())) for c in coils]
     # Squared Flux calculation
     bs_pert = BiotSavart(coils_pert)
     bs_pert.set_points(s.gamma().reshape((-1, 3)))
@@ -331,6 +344,7 @@ for i in range(N_OOS):
         currents_pert_oos.append([c.current.get_value() for c in coils_pert])
     #print progress
     if (i+1) % (N_OOS/10) == 0:
+        print([c.current.get_value() for c in coils_pert])
         print(f"Finished {i+1}/{N_OOS} Out-of-Sample Evaluations")
         
 #store main results in string, print and save
