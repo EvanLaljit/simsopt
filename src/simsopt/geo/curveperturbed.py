@@ -8,8 +8,9 @@ from .._core.util import RealArray
 
 import simsoptpp as sopp
 from simsopt.geo.curve import Curve
+from simsopt.field.coil import Current, CurrentBase
 
-__all__ = ['GaussianSampler', 'PerturbationSample', 'CurvePerturbed']
+__all__ = ['GaussianSampler', 'PerturbationSample', 'CurvePerturbed', 'CurrentPerturbed']
 
 
 @dataclass
@@ -259,3 +260,21 @@ class CurvePerturbed(sopp.Curve, Curve):
 
     def dgammadashdashdash_by_dcoeff_vjp(self, v):
         return self.curve.dgammadashdashdash_by_dcoeff_vjp(v)
+    
+
+class CurrentPerturbed(sopp.CurrentBase, CurrentBase):
+    """A perturbed current with fixed perturbation value."""
+    
+    def __init__(self, current, sample):
+        self.current = current  # Reference to underlying current
+        self.sample = sample  # Fixed perturbation for this sample
+        sopp.CurrentBase.__init__(self)
+        CurrentBase.__init__(self, depends_on=[current])
+        
+    def get_value(self):
+        """Return current value + fixed perturbation"""
+        return self.current.get_value() + self.sample
+    
+    def vjp(self, v_current):
+        """Pass through VJP to underlying current"""
+        return self.current.vjp(v_current)
